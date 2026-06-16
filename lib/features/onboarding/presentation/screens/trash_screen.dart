@@ -5,9 +5,18 @@ class TrashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text('Корзина'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Корзина'),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+      ),
+      backgroundColor: Colors.black,
+      body: const Center(
+        child: Text(
+          'Корзина',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
     );
   }

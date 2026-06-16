@@ -115,7 +115,18 @@ class PhotoSwipeNotifier extends StateNotifier<PhotoSwipeState> {
   Future<void> initialize() async {
     state = state.copyWith(isLoading: true, error: null);
 
-    final hasPermission = await _requestPermission();
+    bool hasPermission = false;
+
+    try {
+      hasPermission = await _requestPermission();
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        hasPermission: false,
+        error: 'Доступ к фото недоступен в этом режиме',
+      );
+      return;
+    }
 
     if (!hasPermission) {
       state = state.copyWith(
@@ -179,6 +190,13 @@ class PhotoSwipeNotifier extends StateNotifier<PhotoSwipeState> {
   // Убрать фото из списка (после свайпа)
   Future<void> removePhoto(String photoId) async {
     await _markAsViewed(photoId);
+    state = state.copyWith(
+      photos: state.photos.where((p) => p.id != photoId).toList(),
+    );
+  }
+
+  // Пропустить фото — убираем из текущей сессии но не помечаем просмотренным
+  void skipPhoto(String photoId) {
     state = state.copyWith(
       photos: state.photos.where((p) => p.id != photoId).toList(),
     );

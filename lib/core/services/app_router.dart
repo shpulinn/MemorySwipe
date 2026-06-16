@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:memory_swipe/features/onboarding/presentation/screens/photo_swipe_screen.dart';
+import 'package:memory_swipe/features/photo_swipe/presentation/screens/photo_swipe_screen.dart';
 import 'package:memory_swipe/features/onboarding/presentation/screens/settings_screen.dart';
 import 'package:memory_swipe/features/onboarding/presentation/screens/statistics_screen.dart';
 import 'package:memory_swipe/features/onboarding/presentation/screens/trash_screen.dart';
