@@ -22,38 +22,103 @@ class SwipeableCardStack extends StatefulWidget {
 }
 
 class _SwipeableCardStackState extends State<SwipeableCardStack>
-    with SingleTickerProviderStateMixin {
-  // Смещение карточки при перетаскивании
+    with TickerProviderStateMixin {
   Offset _dragOffset = Offset.zero;
-  // Угол поворота карточки
   double _rotation = 0;
 
-  // Порог после которого считается свайп (в пикселях)
+  // Контроллер для анимации вылета
+  late AnimationController _flyController;
+  late Animation<Offset> _flyAnimation;
+
+  // Контроллер для анимации возврата
+  late AnimationController _returnController;
+  late Animation<Offset> _returnAnimation;
+  late Animation<double> _returnRotation;
+
+  bool _isAnimating = false;
+  bool _isReturning = false;
+  SwipeDirection? _lastDirection;
+
   static const double _swipeThreshold = 100;
-  // Порог для свайпа вверх
   static const double _upSwipeThreshold = -80;
 
   @override
-  Widget build(BuildContext context) {
-    if (widget.photos.isEmpty) {
-      return const SizedBox.shrink();
+  void initState() {
+    super.initState();
+
+    _flyController = AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    )..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          _onFlyComplete();
+        }
+      });
+
+    _returnController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    )..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          setState(() {
+            _isReturning = false;
+            _dragOffset = Offset.zero;
+            _rotation = 0;
+            _returnController.reset();
+          });
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _flyController.dispose();
+    _returnController.dispose();
+    super.dispose();
+  }
+
+  void _onFlyComplete() {
+    if (!mounted) return;
+
+    final photo = widget.photos.first;
+    final direction = _lastDirection!;
+
+    // Сразу убираем карточку из списка — не сбрасывая offset
+    widget.onSwiped(photo, direction);
+    if (widget.photos.length <= 5) {
+      widget.onLoadMore?.call();
     }
+
+    // Сбрасываем состояние только после следующего кадра
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _isAnimating = false;
+          _lastDirection = null;
+          _dragOffset = Offset.zero;
+          _rotation = 0;
+          _flyController.reset();
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.photos.isEmpty) return const SizedBox.shrink();
 
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Фоновые карточки (следующие в очереди)
         if (widget.photos.length > 2)
           _buildBackCard(widget.photos[2], scale: 0.88, offsetY: -20),
         if (widget.photos.length > 1)
           _buildBackCard(widget.photos[1], scale: 0.94, offsetY: -10),
-        // Главная карточка (та что сейчас)
         _buildFrontCard(widget.photos[0]),
       ],
     );
   }
 
-  // Фоновая карточка (неинтерактивная)
   Widget _buildBackCard(PhotoEntity photo, {
     required double scale,
     required double offsetY,
@@ -65,110 +130,178 @@ class _SwipeableCardStackState extends State<SwipeableCardStack>
         child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.85,
           height: MediaQuery.of(context).size.height * 0.6,
-          child: PhotoCard(photo: photo),
+          child: PhotoCard(photo: photo, showDate: false),
         ),
       ),
     );
   }
 
-  // Главная карточка (интерактивная)
   Widget _buildFrontCard(PhotoEntity photo) {
-    // Вычисляем прозрачность индикаторов
-    final horizontalProgress = _dragOffset.dx / _swipeThreshold;
-    final upProgress = _dragOffset.dy / _upSwipeThreshold;
+    Color glowColor = Colors.transparent;
+    double glowOpacity = 0;
 
-    return GestureDetector(
-      onPanStart: (_) => setState(() {}),
-      onPanUpdate: (details) {
-        setState(() {
-          _dragOffset += details.delta;
-          // Карточка слегка поворачивается при перетаскивании
-          _rotation = _dragOffset.dx * 0.002;
-        });
-      },
-      onPanEnd: (_) => _handleDragEnd(photo),
-      child: Transform.translate(
-        offset: _dragOffset,
-        child: Transform.rotate(
-          angle: _rotation,
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.85,
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Stack(
-              children: [
-                PhotoCard(
-                  photo: photo,
-                  onTap: () => widget.onTap(photo),
-                ),
-                // Индикатор "ОСТАВИТЬ" (свайп вправо)
-                if (_dragOffset.dx > 0)
-                  Positioned(
-                    top: 40,
-                    left: 20,
-                    child: SwipeIndicator(
-                      direction: SwipeDirection.right,
-                      opacity: horizontalProgress,
-                    ),
+    if (!_isAnimating && !_isReturning) {
+      final horizontalProgress = _dragOffset.dx / _swipeThreshold;
+      final upProgress = _dragOffset.dy / _upSwipeThreshold;
+
+      if (_dragOffset.dx > 20) {
+        glowColor = Colors.green;
+        glowOpacity = horizontalProgress.clamp(0.0, 1.0);
+      } else if (_dragOffset.dx < -20) {
+        glowColor = Colors.red;
+        glowOpacity = (-horizontalProgress).clamp(0.0, 1.0);
+      } else if (_dragOffset.dy < -20) {
+        glowColor = Colors.orange;
+        glowOpacity = upProgress.clamp(0.0, 1.0);
+      }
+    }
+
+    return AnimatedBuilder(
+      animation: Listenable.merge([_flyController, _returnController]),
+      builder: (context, child) {
+        Offset currentOffset;
+        double currentRotation;
+
+        if (_isAnimating) {
+          currentOffset = _flyAnimation.value;
+          currentRotation = _rotation * (1 - _flyController.value * 0.5);
+        } else if (_isReturning) {
+          currentOffset = _returnAnimation.value;
+          currentRotation = _returnRotation.value;
+        } else {
+          currentOffset = _dragOffset;
+          currentRotation = _rotation;
+        }
+
+        return GestureDetector(
+          onPanStart: (_isAnimating || _isReturning) ? null : (_) => setState(() {}),
+          onPanUpdate: (_isAnimating || _isReturning)
+              ? null
+              : (details) {
+                  setState(() {
+                    _dragOffset += details.delta;
+                    _rotation = _dragOffset.dx * 0.002;
+                  });
+                },
+          onPanEnd: (_isAnimating || _isReturning)
+              ? null
+              : (_) => _handleDragEnd(photo),
+           child: Visibility(
+          // Скрываем карточку пока идёт сброс после анимации
+          visible: !(_flyController.status == AnimationStatus.completed),
+          child: Transform.translate(
+            offset: currentOffset,
+            child: Transform.rotate(
+              angle: currentRotation,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.85,
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: glowOpacity > 0.1
+                        ? [
+                            BoxShadow(
+                              color: glowColor.withOpacity(glowOpacity * 0.9),
+                              blurRadius: 60,
+                              spreadRadius: 10,
+                            ),
+                          ]
+                        : [],
                   ),
-                // Индикатор "В КОРЗИНУ" (свайп влево)
-                if (_dragOffset.dx < 0)
-                  Positioned(
-                    top: 40,
-                    right: 20,
-                    child: SwipeIndicator(
-                      direction: SwipeDirection.left,
-                      opacity: -horizontalProgress,
-                    ),
-                  ),
-                // Индикатор "ПОЗЖЕ" (свайп вверх)
-                if (_dragOffset.dy < 0)
-                  Positioned(
-                    bottom: 40,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: SwipeIndicator(
-                        direction: SwipeDirection.up,
-                        opacity: upProgress,
+                  child: Stack(
+                    children: [
+                      PhotoCard(
+                        photo: photo,
+                        onTap: () => widget.onTap(photo),
                       ),
-                    ),
+                      if (glowOpacity > 0.1)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: glowColor.withOpacity(glowOpacity),
+                                width: 4,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-              ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+           ),
+        );
+      },
     );
   }
 
   void _handleDragEnd(PhotoEntity photo) {
-    // Определяем в какую сторону свайпнули
     if (_dragOffset.dx > _swipeThreshold) {
-      _completeSwipe(photo, SwipeDirection.right);
+      _startFlyAnimation(SwipeDirection.right);
     } else if (_dragOffset.dx < -_swipeThreshold) {
-      _completeSwipe(photo, SwipeDirection.left);
+      _startFlyAnimation(SwipeDirection.left);
     } else if (_dragOffset.dy < _upSwipeThreshold) {
-      _completeSwipe(photo, SwipeDirection.up);
+      _startFlyAnimation(SwipeDirection.up);
     } else {
-      // Не дотянули — возвращаем карточку на место
-      setState(() {
-        _dragOffset = Offset.zero;
-        _rotation = 0;
-      });
+      _startReturnAnimation();
     }
   }
 
-  void _completeSwipe(PhotoEntity photo, SwipeDirection direction) {
+  void _startReturnAnimation() {
+    _returnAnimation = Tween<Offset>(
+      begin: _dragOffset,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _returnController,
+      curve: Curves.elasticOut,
+    ));
+
+    _returnRotation = Tween<double>(
+      begin: _rotation,
+      end: 0,
+    ).animate(CurvedAnimation(
+      parent: _returnController,
+      curve: Curves.elasticOut,
+    ));
+
+    setState(() => _isReturning = true);
+    _returnController.forward(from: 0);
+  }
+
+  void _startFlyAnimation(SwipeDirection direction) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    Offset targetOffset;
+    switch (direction) {
+      case SwipeDirection.left:
+        targetOffset = Offset(-screenWidth * 1.8, _dragOffset.dy + 50);
+        break;
+      case SwipeDirection.right:
+        targetOffset = Offset(screenWidth * 1.8, _dragOffset.dy + 50);
+        break;
+      case SwipeDirection.up:
+        targetOffset = Offset(_dragOffset.dx, -screenHeight * 1.5);
+        break;
+    }
+
+    _flyAnimation = Tween<Offset>(
+      begin: _dragOffset,
+      end: targetOffset,
+    ).animate(CurvedAnimation(
+      parent: _flyController,
+      curve: Curves.easeIn,
+    ));
+
     setState(() {
-      _dragOffset = Offset.zero;
-      _rotation = 0;
+      _isAnimating = true;
+      _lastDirection = direction;
     });
 
-    widget.onSwiped(photo, direction);
-
-    // Подгружаем следующие фото когда карточек мало
-    if (widget.photos.length <= 3) {
-      widget.onLoadMore?.call();
-    }
+    _flyController.forward(from: 0);
   }
 }

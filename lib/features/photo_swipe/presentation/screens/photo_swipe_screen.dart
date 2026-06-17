@@ -140,17 +140,13 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
 
     switch (direction) {
       case SwipeDirection.left:
-        // В корзину — пока просто помечаем как просмотренное
-        // На следующем этапе добавим реальную корзину
         notifier.removePhoto(photo.id);
         break;
       case SwipeDirection.right:
-        // Оставить — помечаем как просмотренное
         notifier.removePhoto(photo.id);
         break;
       case SwipeDirection.up:
-        // Пропустить — убираем из текущей сессии но не помечаем просмотренным
-        ref.read(photoSwipeProvider.notifier).skipPhoto(photo.id);
+        notifier.skipPhoto(photo.id);
         break;
     }
   }
@@ -163,9 +159,10 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
   }
 
   String _buildCounterText(PhotoSwipeState state) {
+    final now = DateTime.now();
     switch (state.mode) {
       case PhotoMode.today:
-        return 'Воспоминания этого дня';
+        return 'Воспоминания • ${now.day} ${_monthName(now.month)}';
       case PhotoMode.recent:
         return 'Последние фото';
       case PhotoMode.screenshots:
@@ -173,10 +170,19 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
       case PhotoMode.byDate:
         if (state.selectedDate != null) {
           final d = state.selectedDate!;
-          return '${d.day}.${d.month}.${d.year}';
+          return '${d.day} ${_monthName(d.month)} ${d.year}';
         }
         return 'Фото по дате';
     }
+  }
+
+  String _monthName(int month) {
+    const months = [
+      'января', 'февраля', 'марта', 'апреля',
+      'мая', 'июня', 'июля', 'августа',
+      'сентября', 'октября', 'ноября', 'декабря',
+    ];
+    return months[month - 1];
   }
 
   Widget _buildPermissionDenied() {

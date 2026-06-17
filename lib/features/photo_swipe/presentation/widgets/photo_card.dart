@@ -5,11 +5,14 @@ import '../../domain/entities/photo_entity.dart';
 class PhotoCard extends StatelessWidget {
   final PhotoEntity photo;
   final VoidCallback? onTap;
+  // Показывать ли дату (для фоновых карточек скрываем)
+  final bool showDate;
 
   const PhotoCard({
     super.key,
     required this.photo,
     this.onTap,
+    this.showDate = true,
   });
 
   @override
@@ -32,10 +35,32 @@ class PhotoCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
+              // Placeholder пока фото загружается
+              Container(
+                color: Colors.grey[900],
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.white24,
+                    strokeWidth: 2,
+                  ),
+                ),
+              ),
               // Само фото
               Image.file(
                 File(photo.path),
                 fit: BoxFit.cover,
+                // Плавное появление фото
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded || frame != null) {
+                    return child;
+                  }
+                  return AnimatedOpacity(
+                    opacity: frame == null ? 0 : 1,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeIn,
+                    child: child,
+                  );
+                },
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     color: Colors.grey[900],
@@ -47,38 +72,39 @@ class PhotoCard extends StatelessWidget {
                   );
                 },
               ),
-              // Градиент снизу для читаемости даты
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  height: 100,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.black.withOpacity(0.7),
-                        Colors.transparent,
-                      ],
+              // Градиент и дата — только для верхней карточки
+              if (showDate) ...[
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 100,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.7),
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              // Дата фото
-              Positioned(
-                bottom: 20,
-                left: 20,
-                child: Text(
-                  _formatDate(photo.createdAt),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                Positioned(
+                  bottom: 20,
+                  left: 20,
+                  child: Text(
+                    _formatDate(photo.createdAt),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

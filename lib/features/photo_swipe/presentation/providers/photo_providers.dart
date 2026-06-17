@@ -196,7 +196,7 @@ class PhotoSwipeNotifier extends StateNotifier<PhotoSwipeState> {
   }
 
   // Пропустить фото — убираем из текущей сессии но не помечаем просмотренным
-  void skipPhoto(String photoId) {
+  Future<void> skipPhoto(String photoId) async {
     state = state.copyWith(
       photos: state.photos.where((p) => p.id != photoId).toList(),
     );
