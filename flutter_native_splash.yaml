@@ -1,0 +1,15 @@
+flutter_native_splash:
+  # Цвет фона сплэш экрана
+  color: "#000000"
+
+  # Показывать тёмный статус-бар
+  android_12:
+    color: "#000000"
+
+  # Убираем стандартный белый фон
+  fullscreen: false
+
+  # Оставляем сплэш пока приложение не готово
+  android: true
+  ios: true
+  web: false
