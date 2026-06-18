@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:memory_swipe/features/photo_swipe/presentation/screens/photo_swipe_screen.dart';
-import 'package:memory_swipe/features/onboarding/presentation/screens/settings_screen.dart';
-import 'package:memory_swipe/features/onboarding/presentation/screens/statistics_screen.dart';
-import 'package:memory_swipe/features/onboarding/presentation/screens/trash_screen.dart';
+import 'package:memory_swipe/features/settings/presentation/screens/settings_screen.dart';
+import 'package:memory_swipe/features/statistics/presentation/screens/statistics_screen.dart';
+import 'package:memory_swipe/features/trash/presentation/screens/trash_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 
 class AppRouter {

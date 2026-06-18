@@ -8,6 +8,8 @@ import 'package:memory_swipe/features/photo_swipe/presentation/widgets/empty_sta
 import 'package:memory_swipe/features/photo_swipe/presentation/widgets/swipe_indicator.dart';
 import 'package:memory_swipe/features/photo_swipe/presentation/widgets/swipeable_card_stack.dart';
 import '../../../../core/services/app_router.dart';
+import '../../../trash/presentation/providers/trash_providers.dart';
+import '../../../trash/domain/entities/trash_item_entity.dart';
 
 class PhotoSwipeScreen extends ConsumerStatefulWidget {
   const PhotoSwipeScreen({super.key});
@@ -140,6 +142,16 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
 
     switch (direction) {
       case SwipeDirection.left:
+        // Добавляем в корзину
+        ref.read(addToTrashProvider).call(
+          TrashItemEntity(
+            photoId: photo.id,
+            photoPath: photo.path,
+            originalDate: photo.createdAt,
+            deletedAt: DateTime.now(),
+            fileSize: photo.fileSize,
+          ),
+        );
         notifier.removePhoto(photo.id);
         break;
       case SwipeDirection.right:

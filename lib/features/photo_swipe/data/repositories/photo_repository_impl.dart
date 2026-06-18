@@ -11,7 +11,14 @@ class PhotoRepositoryImpl implements PhotoRepository {
 
   @override
   Future<bool> requestPermission() async {
-    final result = await PhotoManager.requestPermissionExtend();
+    final result = await PhotoManager.requestPermissionExtend(
+      requestOption: const PermissionRequestOption(
+        androidPermission: AndroidPermission(
+          type: RequestType.image,
+          mediaLocation: true,
+        ),
+      ),
+    );
     return result.isAuth;
   }
 

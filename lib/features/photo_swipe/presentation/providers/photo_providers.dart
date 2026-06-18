@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memory_swipe/features/photo_swipe/domain/repositories/photo_repository_impl.dart';
+import 'package:memory_swipe/features/photo_swipe/data/repositories/photo_repository_impl.dart';
 import '../../domain/repositories/photo_repository.dart';
 import '../../domain/usecases/get_photos_for_today.dart';
 import '../../domain/usecases/get_recent_photos.dart';
