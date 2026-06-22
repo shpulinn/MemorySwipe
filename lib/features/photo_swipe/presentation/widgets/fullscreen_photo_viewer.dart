@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../domain/entities/photo_entity.dart';
+import '../../../../core/services/share_service.dart';
 
 class FullscreenPhotoViewer extends StatefulWidget {
   final PhotoEntity photo;
@@ -211,10 +212,7 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
   }
 
   Future<void> _sharePhoto() async {
-    // Покажем снэкбар — поделиться добавим на следующем шаге
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Функция "Поделиться" — скоро')),
-    );
+    await ShareService.sharePhoto(widget.photo.path);
   }
 
   String _formatDate(DateTime date) {
