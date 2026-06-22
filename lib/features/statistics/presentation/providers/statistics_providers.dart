@@ -1,0 +1,48 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/statistics_service.dart';
+import '../../domain/entities/statistics_entity.dart';
+
+final statisticsServiceProvider = Provider<StatisticsService>((ref) {
+  return StatisticsService();
+});
+
+final statisticsProvider = Provider<StatisticsEntity>((ref) {
+  return ref.read(statisticsServiceProvider).getStatistics();
+});
+
+class StatisticsNotifier extends StateNotifier<StatisticsEntity> {
+  final StatisticsService _service;
+
+  StatisticsNotifier(this._service) : super(const StatisticsEntity()) {
+    _load();
+  }
+
+  void _load() {
+    state = _service.getStatistics();
+  }
+
+  Future<void> recordTrashed({required int fileSize}) async {
+    await _service.recordTrashed(fileSize: fileSize);
+    _load();
+  }
+
+  Future<void> recordKept() async {
+    await _service.recordKept();
+    _load();
+  }
+
+  Future<void> recordSkipped() async {
+    await _service.recordSkipped();
+    _load();
+  }
+
+  Future<void> reset() async {
+    await _service.reset();
+    _load();
+  }
+}
+
+final statisticsNotifierProvider =
+    StateNotifierProvider<StatisticsNotifier, StatisticsEntity>((ref) {
+  return StatisticsNotifier(ref.read(statisticsServiceProvider));
+});

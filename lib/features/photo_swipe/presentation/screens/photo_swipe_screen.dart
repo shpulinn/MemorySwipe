@@ -11,6 +11,7 @@ import '../../../../core/services/app_router.dart';
 import '../../../trash/presentation/providers/trash_providers.dart';
 import '../../../trash/domain/entities/trash_item_entity.dart';
 import '../widgets/fullscreen_photo_viewer.dart';
+import '../../../statistics/presentation/providers/statistics_providers.dart';
 
 class PhotoSwipeScreen extends ConsumerStatefulWidget {
   const PhotoSwipeScreen({super.key});
@@ -42,6 +43,11 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
           style: TextStyle(color: Colors.white),
         ),
         actions: [
+          // Кнопка статистики
+          IconButton(
+            icon: const Icon(Icons.bar_chart, color: Colors.white),
+            onPressed: () => context.push(AppRouter.statistics),
+          ),
           // Кнопка корзины
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.white),
@@ -143,10 +149,10 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
 
   void _handleSwipe(PhotoEntity photo, SwipeDirection direction) {
     final notifier = ref.read(photoSwipeProvider.notifier);
+    final stats = ref.read(statisticsNotifierProvider.notifier);
 
     switch (direction) {
       case SwipeDirection.left:
-        // Добавляем в корзину
         ref.read(addToTrashProvider).call(
           TrashItemEntity(
             photoId: photo.id,
@@ -156,12 +162,15 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
             fileSize: photo.fileSize,
           ),
         );
+        stats.recordTrashed(fileSize: photo.fileSize);
         notifier.removePhoto(photo.id);
         break;
       case SwipeDirection.right:
+        stats.recordKept();
         notifier.removePhoto(photo.id);
         break;
       case SwipeDirection.up:
+        stats.recordSkipped();
         notifier.skipPhoto(photo.id);
         break;
     }
