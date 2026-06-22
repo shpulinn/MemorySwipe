@@ -10,6 +10,7 @@ import 'package:memory_swipe/features/photo_swipe/presentation/widgets/swipeable
 import '../../../../core/services/app_router.dart';
 import '../../../trash/presentation/providers/trash_providers.dart';
 import '../../../trash/domain/entities/trash_item_entity.dart';
+import '../widgets/fullscreen_photo_viewer.dart';
 
 class PhotoSwipeScreen extends ConsumerStatefulWidget {
   const PhotoSwipeScreen({super.key});
@@ -113,24 +114,27 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
           ),
         ),
         // Кнопки действий
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: ActionButtons(
-            onTrash: () {
-              if (state.photos.isNotEmpty) {
-                _handleSwipe(state.photos.first, SwipeDirection.left);
-              }
-            },
-            onSkip: () {
-              if (state.photos.isNotEmpty) {
-                _handleSwipe(state.photos.first, SwipeDirection.up);
-              }
-            },
-            onKeep: () {
-              if (state.photos.isNotEmpty) {
-                _handleSwipe(state.photos.first, SwipeDirection.right);
-              }
-            },
+        // Кнопки действий — SafeArea защищает от системной панели
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: ActionButtons(
+              onTrash: () {
+                if (state.photos.isNotEmpty) {
+                  _handleSwipe(state.photos.first, SwipeDirection.left);
+                }
+              },
+              onSkip: () {
+                if (state.photos.isNotEmpty) {
+                  _handleSwipe(state.photos.first, SwipeDirection.up);
+                }
+              },
+              onKeep: () {
+                if (state.photos.isNotEmpty) {
+                  _handleSwipe(state.photos.first, SwipeDirection.right);
+                }
+              },
+            ),
           ),
         ),
       ],
@@ -164,10 +168,7 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
   }
 
   void _openFullScreen(PhotoEntity photo) {
-    // На следующем этапе реализуем полноэкранный просмотр
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Полноэкранный просмотр — скоро')),
-    );
+    FullscreenPhotoViewer.show(context, photo);
   }
 
   String _buildCounterText(PhotoSwipeState state) {
