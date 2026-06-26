@@ -63,7 +63,8 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
         children: [
           GestureDetector(
             onTap: () => setState(() => _showInfo = !_showInfo),
-            onDoubleTap: _resetZoom,
+            onDoubleTapDown: _handleDoubleTapDown,
+            onDoubleTap: _handleDoubleTap,
             child: Center(
               child: InteractiveViewer(
                 transformationController: _transformationController,
@@ -207,8 +208,34 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
     );
   }
 
-  void _resetZoom() {
-    _transformationController.value = Matrix4.identity();
+  void _handleDoubleTapDown(TapDownDetails details) {
+    _doubleTapPosition = details.localPosition;
+  }
+
+  Offset _doubleTapPosition = Offset.zero;
+
+  void _handleDoubleTap() {
+    // Проверяем текущий масштаб
+    final double currentScale = _transformationController.value.getMaxScaleOnAxis();
+
+    if (currentScale > 1.1) {
+      // Уже зумлено — сбрасываем
+      _transformationController.value = Matrix4.identity();
+    } else {
+      // Зумим к месту тапа
+      final double scale = 2.5;
+      final Offset tapPosition = _doubleTapPosition;
+
+      // Вычисляем смещение чтобы тапнутая точка осталась по центру
+      final double x = -tapPosition.dx * (scale - 1);
+      final double y = -tapPosition.dy * (scale - 1);
+
+      final Matrix4 zoomed = Matrix4.identity()
+        ..translate(x, y)
+        ..scale(scale);
+
+      _transformationController.value = zoomed;
+    }
   }
 
   Future<void> _sharePhoto() async {

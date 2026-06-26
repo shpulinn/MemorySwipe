@@ -6,18 +6,15 @@ import 'core/constants/app_constants.dart';
 import 'core/services/app_router.dart';
 
 void main() async {
-  // Сохраняем сплэш пока идёт инициализация
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  // Инициализируем базу данных
   await Hive.initFlutter();
   await Hive.openBox<bool>(AppConstants.viewedPhotosBoxName);
   await Hive.openBox<String>(AppConstants.trashBoxName);
   await Hive.openBox<dynamic>(AppConstants.settingsBoxName);
   await Hive.openBox<dynamic>(AppConstants.statisticsBoxName);
 
-  // Убираем сплэш — всё готово
   FlutterNativeSplash.remove();
 
   runApp(

@@ -24,9 +24,8 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
   @override
   void initState() {
     super.initState();
-    // Загружаем фото при открытии экрана
-    Future.microtask(() {
-      ref.read(photoSwipeProvider.notifier).initialize();
+    Future.microtask(() async {
+      await ref.read(photoSwipeProvider.notifier).initialize();
     });
   }
 

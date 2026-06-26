@@ -16,7 +16,7 @@ class AppRouter {
   static const String settings = '/settings';
 
   static final GoRouter router = GoRouter(
-    initialLocation: photoSwipe,
+    initialLocation: onboarding,
     routes: [
       GoRoute(
         path: onboarding,
