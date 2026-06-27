@@ -21,28 +21,28 @@ class _OnboardingIntroScreenState extends State<OnboardingIntroScreen> {
       title: 'Привет!',
       description:
           'Memory Swipe показывает фотографии, сделанные в этот день в прошлые годы.\n\nВспомни что происходило год, два, три назад и сохрани самые лучшие моменты в своей памяти.',
-      color: Colors.deepPurple,
+      color: Color.fromRGBO(203,170,213, 1),
     ),
     _OnboardingPage(
       icon: Icons.swipe,
       title: 'Свайпай фото',
       description:
           '👉 Вправо — оставить фото\n\n👈 Влево — отправить в корзину\n\n👆 Вверх — пропустить и показать позже',
-      color: Colors.blue,
+      color: Color.fromRGBO(255,221,149, 1),
     ),
     _OnboardingPage(
       icon: Icons.zoom_in,
-      title: 'Нажми, чтобы увидеть больше',
+      title: 'Рассмотри детально',
       description:
           'Нажми на фото, чтобы открыть его на весь экран.\n\nТакже, в этом режиме можно приблизить фото и быстро поделиться им с друзьями.',
-      color: Colors.amber,
+      color: Color.fromRGBO(205,230,164, 1),
     ),
     _OnboardingPage(
       icon: Icons.delete_outline,
       title: 'Безопасная корзина',
       description:
           'Фото не удаляются сразу.\n\nОни попадают в корзину приложения, откуда ты можешь их восстановить или удалить навсегда.',
-      color: Colors.green,
+      color: Color.fromRGBO(132,227,200,1),
     ),
   ];
 

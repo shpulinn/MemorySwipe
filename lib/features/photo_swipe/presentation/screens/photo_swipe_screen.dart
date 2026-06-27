@@ -12,6 +12,7 @@ import '../../../trash/presentation/providers/trash_providers.dart';
 import '../../../trash/domain/entities/trash_item_entity.dart';
 import '../widgets/fullscreen_photo_viewer.dart';
 import '../../../statistics/presentation/providers/statistics_providers.dart';
+import 'package:app_settings/app_settings.dart';
 
 class PhotoSwipeScreen extends ConsumerStatefulWidget {
   const PhotoSwipeScreen({super.key});
@@ -213,8 +214,11 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.photo_library_outlined,
-                size: 80, color: Colors.grey),
+            const Icon(
+              Icons.photo_library_outlined,
+              size: 80,
+              color: Colors.grey,
+            ),
             const SizedBox(height: 24),
             const Text(
               'Нет доступа к фото',
@@ -226,16 +230,77 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Разреши доступ к галерее в настройках телефона',
+              'Чтобы приложение работало, нужно разрешить доступ к фотографиям.',
               style: TextStyle(fontSize: 16, color: Colors.grey[400]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                ref.read(photoSwipeProvider.notifier).initialize();
-              },
-              child: const Text('Попробовать снова'),
+            // Кнопка открытия настроек
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await AppSettings.openAppSettings();
+                },
+                icon: const Icon(Icons.settings),
+                label: const Text('Открыть настройки'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Кнопка повторной проверки
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  ref.read(photoSwipeProvider.notifier).initialize();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Я уже разрешил — проверить'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.grey),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[800]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.grey[500],
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'После выдачи разрешения может потребоваться перезапуск приложения',
+                      style: TextStyle(
+                        color: Colors.grey[500],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

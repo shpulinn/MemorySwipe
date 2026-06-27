@@ -29,6 +29,9 @@ dependencies:
   # Sharing
   share_plus: ^10.1.4
 
+  # Открытие настроек приложения
+  app_settings: ^5.1.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
