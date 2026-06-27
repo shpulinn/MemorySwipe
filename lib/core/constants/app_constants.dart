@@ -8,6 +8,7 @@ class AppConstants {
   static const String settingsBoxName = 'settings_box';
   static const String statisticsBoxName = 'statistics_box';
   static const String viewedPhotosBoxName = 'viewed_photos_box';
+  static const String onboardingShownKey = 'onboarding_shown';
 
   // Сколько фото подгружать за один раз
   static const int photoPageSize = 20;
