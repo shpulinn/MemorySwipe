@@ -8,6 +8,8 @@ import '../../domain/usecases/get_photos_by_date.dart';
 import '../../domain/usecases/request_permission.dart';
 import '../../domain/usecases/mark_photo_as_viewed.dart';
 import '../../domain/entities/photo_entity.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../../../../core/constants/app_constants.dart';
 
 // Репозиторий
 final photoRepositoryProvider = Provider<PhotoRepository>((ref) {
@@ -200,6 +202,12 @@ class PhotoSwipeNotifier extends StateNotifier<PhotoSwipeState> {
     state = state.copyWith(
       photos: state.photos.where((p) => p.id != photoId).toList(),
     );
+  }
+
+  // Сбросить все просмотренные фото
+  Future<void> resetViewed() async {
+    await Hive.box<bool>(AppConstants.viewedPhotosBoxName).clear();
+    await loadPhotos();
   }
 
   Future<List<PhotoEntity>> _fetchByMode(int page) async {
