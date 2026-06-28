@@ -10,10 +10,7 @@ class StatisticsScreen extends ConsumerWidget {
     final stats = ref.watch(statisticsNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
         title: const Text('Статистика'),
         actions: [
           // Кнопка сброса
@@ -30,10 +27,10 @@ class StatisticsScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Заголовок
-            const Text(
+            Text(
               'Ваши достижения',
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -41,12 +38,16 @@ class StatisticsScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               'Статистика за всё время',
-              style: TextStyle(color: Colors.grey[500], fontSize: 14),
+              style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              fontSize: 14,
+            ),
             ),
             const SizedBox(height: 32),
 
             // Карточка освобождённого места
             _buildHighlightCard(
+              context: context,
               icon: Icons.storage,
               label: 'Освобождено места',
               value: '${stats.freedMb.toStringAsFixed(1)} МБ',
@@ -64,24 +65,28 @@ class StatisticsScreen extends ConsumerWidget {
               childAspectRatio: 1.4,
               children: [
                 _buildStatCard(
+                  context: context,
                   icon: Icons.remove_red_eye_outlined,
                   label: 'Просмотрено',
                   value: '${stats.totalViewed}',
                   color: Colors.blue,
                 ),
                 _buildStatCard(
+                  context: context,
                   icon: Icons.delete_outline,
                   label: 'В корзину',
                   value: '${stats.totalTrashed}',
                   color: Colors.red,
                 ),
                 _buildStatCard(
+                  context: context,
                   icon: Icons.favorite_outline,
                   label: 'Оставлено',
                   value: '${stats.totalKept}',
                   color: Colors.green,
                 ),
                 _buildStatCard(
+                  context: context,
                   icon: Icons.arrow_upward,
                   label: 'Пропущено',
                   value: '${stats.totalSkipped}',
@@ -95,7 +100,10 @@ class StatisticsScreen extends ConsumerWidget {
             Center(
               child: Text(
                 'Свайпай фото чтобы видеть прогресс здесь',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                  fontSize: 13,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -106,6 +114,7 @@ class StatisticsScreen extends ConsumerWidget {
   }
 
   Widget _buildHighlightCard({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
@@ -144,7 +153,7 @@ class StatisticsScreen extends ConsumerWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: Colors.grey[400],
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   fontSize: 14,
                 ),
               ),
@@ -156,6 +165,7 @@ class StatisticsScreen extends ConsumerWidget {
   }
 
   Widget _buildStatCard({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
@@ -164,9 +174,11 @@ class StatisticsScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[800]!),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,8 +190,8 @@ class StatisticsScreen extends ConsumerWidget {
             children: [
               Text(
                 value,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -187,7 +199,7 @@ class StatisticsScreen extends ConsumerWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: Colors.grey[500],
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                   fontSize: 12,
                 ),
               ),
@@ -202,22 +214,12 @@ class StatisticsScreen extends ConsumerWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Сбросить статистику?',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Все данные статистики будут удалены.',
-          style: TextStyle(color: Colors.grey),
-        ),
+        title: const Text('Сбросить статистику?'),
+        content: const Text('Все данные статистики будут удалены.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Отмена',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('Отмена'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),

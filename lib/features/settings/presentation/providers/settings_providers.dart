@@ -45,5 +45,13 @@ final settingsProvider =
 
 // Удобный провайдер для ThemeMode
 final themeModeProvider = Provider<ThemeMode>((ref) {
-  return ref.watch(settingsProvider.notifier).themeMode;
+  final theme = ref.watch(settingsProvider);
+  switch (theme) {
+    case AppTheme.dark:
+      return ThemeMode.dark;
+    case AppTheme.light:
+      return ThemeMode.light;
+    case AppTheme.system:
+      return ThemeMode.system;
+  }
 });

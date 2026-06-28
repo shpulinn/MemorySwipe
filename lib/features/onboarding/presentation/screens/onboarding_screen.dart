@@ -69,7 +69,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Center(
@@ -112,10 +111,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 Text(
                   _phrase,
                   style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 16,
-                    fontStyle: FontStyle.italic,
-                  ),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      fontSize: 16,
+                      fontStyle: FontStyle.italic,
+                    ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 60),

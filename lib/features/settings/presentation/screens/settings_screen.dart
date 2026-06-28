@@ -19,9 +19,9 @@ class SettingsScreen extends ConsumerWidget {
         children: [
           // Раздел — Внешний вид
           _buildSectionHeader(context, 'Внешний вид'),
-          _buildThemeTile(context, ref, currentTheme, AppTheme.dark, '🌙 Тёмная'),
-          _buildThemeTile(context, ref, currentTheme, AppTheme.light, '☀️ Светлая'),
-          _buildThemeTile(context, ref, currentTheme, AppTheme.system, '📱 Системная'),
+          _buildThemeTile(context, ref, currentTheme, AppTheme.dark, '🌙 Тёмный'),
+          _buildThemeTile(context, ref, currentTheme, AppTheme.light, '☀️ Светлый'),
+          _buildThemeTile(context, ref, currentTheme, AppTheme.system, '📱 Системный'),
 
           const Divider(),
 

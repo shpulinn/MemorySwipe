@@ -35,27 +35,19 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
     final state = ref.watch(photoSwipeProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text(
-          'Memory Swipe',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Memory Swipe'),
         actions: [
-          // Кнопка статистики
           IconButton(
-            icon: const Icon(Icons.bar_chart, color: Colors.white),
+            icon: const Icon(Icons.bar_chart),
             onPressed: () => context.push(AppRouter.statistics),
           ),
-          // Кнопка корзины
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.white),
+            icon: const Icon(Icons.delete_outline),
             onPressed: () => context.push(AppRouter.trash),
           ),
-          // Кнопка настроек
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Colors.white),
+            icon: const Icon(Icons.settings_outlined),
             onPressed: () => context.push(AppRouter.settings),
           ),
         ],
@@ -99,7 +91,10 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             _buildCounterText(state),
-            style: TextStyle(color: Colors.grey[500], fontSize: 14),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              fontSize: 14,
+            ),
           ),
         ),
         // Стек карточек
@@ -317,7 +312,10 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
           const SizedBox(height: 16),
           Text(
             error,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 16,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),

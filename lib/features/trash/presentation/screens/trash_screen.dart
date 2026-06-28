@@ -25,10 +25,7 @@ class _TrashScreenState extends ConsumerState<TrashScreen> {
     final state = ref.watch(trashNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
         title: state.hasSelection
             ? Text('Выбрано: ${state.selectedIds.length}')
             : const Text('Корзина'),
@@ -125,19 +122,25 @@ class _TrashScreenState extends ConsumerState<TrashScreen> {
     final sizeMb = (state.totalSize / 1024 / 1024).toStringAsFixed(1);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Colors.grey[900],
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Row(
         children: [
           const Icon(Icons.info_outline, color: Colors.grey, size: 16),
           const SizedBox(width: 8),
           Text(
             '${state.items.length} фото • $sizeMb МБ',
-            style: const TextStyle(color: Colors.grey, fontSize: 14),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              fontSize: 14,
+            ),
           ),
           const Spacer(),
           Text(
             'Удерживай для выбора',
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -225,7 +228,7 @@ class _TrashScreenState extends ConsumerState<TrashScreen> {
   void _showItemOptions(TrashItemEntity item) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey[900],
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -259,16 +262,16 @@ class _TrashScreenState extends ConsumerState<TrashScreen> {
             const SizedBox(height: 8),
             Text(
               _formatDate(item.originalDate),
-              style: const TextStyle(color: Colors.grey, fontSize: 14),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 20),
             // Восстановить
             ListTile(
               leading: const Icon(Icons.restore, color: Colors.green),
-              title: const Text(
-                'Восстановить',
-                style: TextStyle(color: Colors.white),
-              ),
+              title: const Text('Восстановить'),
               onTap: () {
                 Navigator.pop(context);
                 ref.read(trashNotifierProvider.notifier).restore(item.photoId);
@@ -350,18 +353,12 @@ class _TrashScreenState extends ConsumerState<TrashScreen> {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: Text(title, style: const TextStyle(color: Colors.white)),
-        content: Text(message, style: const TextStyle(color: Colors.grey)),
+        title: Text(title),
+        content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const TextStyle(color: Colors.white) == null
-                ? const Text('Отмена')
-                : const Text(
-                    'Отмена',
-                    style: TextStyle(color: Colors.white),
-                  ),
+            child: const Text('Отмена'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -387,22 +384,14 @@ class _TrashScreenState extends ConsumerState<TrashScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Не удалось удалить',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Не удалось удалить'),
         content: const Text(
           'Ваше устройство или прошивка ограничивают удаление фото сторонними приложениями.\n\nФото можно удалить вручную через системную галерею.',
-          style: TextStyle(color: Colors.grey),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Понятно',
-              style: TextStyle(color: Colors.deepPurple),
-            ),
+            child: const Text('Понятно'),
           ),
         ],
       ),

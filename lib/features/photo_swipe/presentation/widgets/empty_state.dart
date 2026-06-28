@@ -16,18 +16,18 @@ class EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.auto_awesome,
             size: 80,
-            color: Colors.deepPurple,
+            color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'На сегодня всё!',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -35,17 +35,17 @@ class EmptyState extends StatelessWidget {
             'Все воспоминания этого дня просмотрены',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[400],
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 48),
-          const Text(
+          Text(
             'Что показать дальше?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Colors.white70,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
             ),
           ),
           const SizedBox(height: 24),
@@ -105,8 +105,10 @@ class _ModeButton extends StatelessWidget {
         icon: Icon(icon),
         label: Text(label),
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.white,
-          side: const BorderSide(color: Colors.deepPurple),
+          foregroundColor: Theme.of(context).colorScheme.onSurface,
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.outline,
+          ),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

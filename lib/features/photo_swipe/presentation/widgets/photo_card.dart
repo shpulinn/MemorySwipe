@@ -37,10 +37,10 @@ class PhotoCard extends StatelessWidget {
             children: [
               // Placeholder пока фото загружается
               Container(
-                color: Colors.grey[900],
-                child: const Center(
+                color: Colors.grey[850],
+                child: Center(
                   child: CircularProgressIndicator(
-                    color: Colors.white24,
+                    color: Colors.grey[600],
                     strokeWidth: 2,
                   ),
                 ),
