@@ -13,6 +13,7 @@ import '../../../trash/domain/entities/trash_item_entity.dart';
 import '../widgets/fullscreen_photo_viewer.dart';
 import '../../../statistics/presentation/providers/statistics_providers.dart';
 import 'package:app_settings/app_settings.dart';
+import '../widgets/swipe_indicator.dart';
 
 class PhotoSwipeScreen extends ConsumerStatefulWidget {
   const PhotoSwipeScreen({super.key});
@@ -29,6 +30,8 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
       await ref.read(photoSwipeProvider.notifier).initialize();
     });
   }
+
+  final GlobalKey<SwipeableCardStackState> _cardStackKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -101,17 +104,18 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
         Expanded(
           child: Center(
             child: SwipeableCardStack(
-              photos: state.photos,
-              onLoadMore: () {
-                ref.read(photoSwipeProvider.notifier).loadMore();
-              },
-              onSwiped: (photo, direction) {
-                _handleSwipe(photo, direction);
-              },
-              onTap: (photo) {
-                _openFullScreen(photo);
-              },
-            ),
+                key: _cardStackKey,
+                photos: state.photos,
+                onLoadMore: () {
+                  ref.read(photoSwipeProvider.notifier).loadMore();
+                },
+                onSwiped: (photo, direction) {
+                  _handleSwipe(photo, direction);
+                },
+                onTap: (photo) {
+                  _openFullScreen(photo);
+                },
+              ),
           ),
         ),
         // Кнопки действий
@@ -120,22 +124,22 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: ActionButtons(
-              onTrash: () {
-                if (state.photos.isNotEmpty) {
-                  _handleSwipe(state.photos.first, SwipeDirection.left);
-                }
-              },
-              onSkip: () {
-                if (state.photos.isNotEmpty) {
-                  _handleSwipe(state.photos.first, SwipeDirection.up);
-                }
-              },
-              onKeep: () {
-                if (state.photos.isNotEmpty) {
-                  _handleSwipe(state.photos.first, SwipeDirection.right);
-                }
-              },
-            ),
+            onTrash: () {
+              if (state.photos.isNotEmpty) {
+                _cardStackKey.currentState?.triggerSwipe(SwipeDirection.left);
+              }
+            },
+            onSkip: () {
+              if (state.photos.isNotEmpty) {
+                _cardStackKey.currentState?.triggerSwipe(SwipeDirection.up);
+              }
+            },
+            onKeep: () {
+              if (state.photos.isNotEmpty) {
+                _cardStackKey.currentState?.triggerSwipe(SwipeDirection.right);
+              }
+            },
+          ),
           ),
         ),
       ],

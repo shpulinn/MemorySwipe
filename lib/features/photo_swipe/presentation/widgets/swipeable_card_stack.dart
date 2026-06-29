@@ -18,10 +18,10 @@ class SwipeableCardStack extends StatefulWidget {
   });
 
   @override
-  State<SwipeableCardStack> createState() => _SwipeableCardStackState();
+  State<SwipeableCardStack> createState() => SwipeableCardStackState();
 }
 
-class _SwipeableCardStackState extends State<SwipeableCardStack>
+class SwipeableCardStackState extends State<SwipeableCardStack>
     with TickerProviderStateMixin {
   Offset _dragOffset = Offset.zero;
   double _rotation = 0;
@@ -270,6 +270,13 @@ class _SwipeableCardStackState extends State<SwipeableCardStack>
 
     setState(() => _isReturning = true);
     _returnController.forward(from: 0);
+  }
+
+  // Публичный метод для вызова свайпа из кнопок
+  void triggerSwipe(SwipeDirection direction) {
+    if (_isAnimating || _isReturning) return;
+    if (widget.photos.isEmpty) return;
+    _startFlyAnimation(direction);
   }
 
   void _startFlyAnimation(SwipeDirection direction) {
