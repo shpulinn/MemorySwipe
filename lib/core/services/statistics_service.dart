@@ -50,6 +50,27 @@ class StatisticsService {
     await _box.put(_skippedKey, current + 1);
   }
 
+  Future<void> undoTrashed({required int fileSize}) async {
+    final currentTrashed = _box.get(_trashedKey, defaultValue: 0) as int;
+    final currentFreed = _box.get(_freedBytesKey, defaultValue: 0) as int;
+    final currentViewed = _box.get(_viewedKey, defaultValue: 0) as int;
+    await _box.put(_trashedKey, (currentTrashed - 1).clamp(0, 999999));
+    await _box.put(_freedBytesKey, (currentFreed - fileSize).clamp(0, 999999999));
+    await _box.put(_viewedKey, (currentViewed - 1).clamp(0, 999999));
+  }
+
+  Future<void> undoKept() async {
+    final current = _box.get(_keptKey, defaultValue: 0) as int;
+    final currentViewed = _box.get(_viewedKey, defaultValue: 0) as int;
+    await _box.put(_keptKey, (current - 1).clamp(0, 999999));
+    await _box.put(_viewedKey, (currentViewed - 1).clamp(0, 999999));
+  }
+
+  Future<void> undoSkipped() async {
+    final current = _box.get(_skippedKey, defaultValue: 0) as int;
+    await _box.put(_skippedKey, (current - 1).clamp(0, 999999));
+  }
+
   // Сбросить статистику
   Future<void> reset() async {
     await _box.put(_viewedKey, 0);

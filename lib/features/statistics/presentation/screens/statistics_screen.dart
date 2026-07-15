@@ -12,14 +12,6 @@ class StatisticsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Статистика'),
-        actions: [
-          // Кнопка сброса
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Сбросить',
-            onPressed: () => _confirmReset(context, ref),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -28,20 +20,12 @@ class StatisticsScreen extends ConsumerWidget {
           children: [
             // Заголовок
             Text(
-              'Ваши достижения',
+              'Твои достижения',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Статистика за всё время',
-              style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-              fontSize: 14,
-            ),
             ),
             const SizedBox(height: 32),
 
@@ -95,18 +79,6 @@ class StatisticsScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 32),
-
-            // Подсказка
-            Center(
-              child: Text(
-                'Свайпай фото чтобы видеть прогресс здесь',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                  fontSize: 13,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
           ],
         ),
       ),
@@ -208,32 +180,5 @@ class StatisticsScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Сбросить статистику?'),
-        content: const Text('Все данные статистики будут удалены.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Сбросить',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      ref.read(statisticsNotifierProvider.notifier).reset();
-    }
   }
 }

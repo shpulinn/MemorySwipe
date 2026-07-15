@@ -10,6 +10,7 @@ import '../../domain/usecases/mark_photo_as_viewed.dart';
 import '../../domain/entities/photo_entity.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../widgets/swipe_indicator.dart';
 
 // Репозиторий
 final photoRepositoryProvider = Provider<PhotoRepository>((ref) {
@@ -54,6 +55,7 @@ class PhotoSwipeState {
   final PhotoMode mode;
   final DateTime? selectedDate;
   final int currentPage;
+  final List<LastAction> actionHistory;
 
   const PhotoSwipeState({
     this.photos = const [],
@@ -64,6 +66,7 @@ class PhotoSwipeState {
     this.mode = PhotoMode.today,
     this.selectedDate,
     this.currentPage = 0,
+    this.actionHistory = const [], 
   });
 
   PhotoSwipeState copyWith({
@@ -75,6 +78,7 @@ class PhotoSwipeState {
     PhotoMode? mode,
     DateTime? selectedDate,
     int? currentPage,
+    List<LastAction>? actionHistory,
   }) {
     return PhotoSwipeState(
       photos: photos ?? this.photos,
@@ -85,8 +89,27 @@ class PhotoSwipeState {
       mode: mode ?? this.mode,
       selectedDate: selectedDate ?? this.selectedDate,
       currentPage: currentPage ?? this.currentPage,
+      actionHistory: actionHistory ?? this.actionHistory,
     );
   }
+
+    // Удобный геттер — есть ли что отменять
+  bool get canUndo => actionHistory.isNotEmpty;
+
+  // Последнее действие
+  LastAction? get lastAction =>
+      actionHistory.isNotEmpty ? actionHistory.last : null;
+}
+
+// Последнее действие пользователя для отмены
+class LastAction {
+  final PhotoEntity photo;
+  final SwipeDirection direction;
+
+  const LastAction({
+    required this.photo,
+    required this.direction,
+  });
 }
 
 // Notifier — управляет состоянием экрана свайпов
@@ -190,17 +213,75 @@ class PhotoSwipeNotifier extends StateNotifier<PhotoSwipeState> {
   }
 
   // Убрать фото из списка (после свайпа)
-  Future<void> removePhoto(String photoId) async {
+  Future<void> removePhoto(String photoId, {SwipeDirection? direction}) async {
+    final photo = state.photos.firstWhere((p) => p.id == photoId);
     await _markAsViewed(photoId);
+
+    final newHistory = direction != null
+        ? [
+            ...state.actionHistory,
+            LastAction(photo: photo, direction: direction),
+          ].reversed.take(5).toList().reversed.toList()
+        : state.actionHistory;
+
     state = state.copyWith(
       photos: state.photos.where((p) => p.id != photoId).toList(),
+      actionHistory: newHistory,
     );
   }
 
   // Пропустить фото — убираем из текущей сессии но не помечаем просмотренным
   Future<void> skipPhoto(String photoId) async {
+    final photo = state.photos.firstWhere((p) => p.id == photoId);
+
+    final newHistory = [
+      ...state.actionHistory,
+      LastAction(photo: photo, direction: SwipeDirection.up),
+    ].reversed.take(5).toList().reversed.toList();
+
     state = state.copyWith(
       photos: state.photos.where((p) => p.id != photoId).toList(),
+      actionHistory: newHistory,
+    );
+  }
+
+  Future<void> undoLastAction() async {
+    if (state.actionHistory.isEmpty) return;
+
+    final newHistory = List<LastAction>.from(state.actionHistory);
+    final last = newHistory.removeLast();
+
+    // Возвращаем фото в начало стека
+    final updatedPhotos = [last.photo, ...state.photos];
+
+    // Убираем из просмотренных если было влево или вправо
+    if (last.direction != SwipeDirection.up) {
+      await Hive.box<bool>(AppConstants.viewedPhotosBoxName)
+          .delete(last.photo.id);
+    }
+
+    state = state.copyWith(
+      photos: updatedPhotos,
+      actionHistory: newHistory,
+    );
+  }
+
+  Future<void> undoAll() async {
+    final history = List<LastAction>.from(state.actionHistory);
+
+    var updatedPhotos = List<PhotoEntity>.from(state.photos);
+
+    for (final action in history.reversed) {
+      updatedPhotos = [action.photo, ...updatedPhotos];
+      if (action.direction != SwipeDirection.up) {
+        await Hive.box<bool>(AppConstants.viewedPhotosBoxName)
+            .delete(action.photo.id);
+      }
+    }
+
+    state = state.copyWith(
+      photos: updatedPhotos,
+      actionHistory: [],
     );
   }
 
@@ -208,6 +289,10 @@ class PhotoSwipeNotifier extends StateNotifier<PhotoSwipeState> {
   Future<void> resetViewed() async {
     await Hive.box<bool>(AppConstants.viewedPhotosBoxName).clear();
     await loadPhotos();
+  }
+
+  void clearPhotos() {
+    state = state.copyWith(photos: [], hasMore: false);
   }
 
   Future<List<PhotoEntity>> _fetchByMode(int page) async {

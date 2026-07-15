@@ -26,11 +26,9 @@ class SwipeableCardStackState extends State<SwipeableCardStack>
   Offset _dragOffset = Offset.zero;
   double _rotation = 0;
 
-  // Контроллер для анимации вылета
   late AnimationController _flyController;
   late Animation<Offset> _flyAnimation;
 
-  // Контроллер для анимации возврата
   late AnimationController _returnController;
   late Animation<Offset> _returnAnimation;
   late Animation<double> _returnRotation;
@@ -39,8 +37,10 @@ class SwipeableCardStackState extends State<SwipeableCardStack>
   bool _isReturning = false;
   SwipeDirection? _lastDirection;
 
+  int _pendingPhotosLength = -1; // длина списка, которую мы ждём после свайпа
+
   static const double _swipeThreshold = 100;
-  static const double _upSwipeThreshold = -80;
+  static const double _upSwipeThreshold = -150;
 
   @override
   void initState() {
@@ -68,6 +68,29 @@ class SwipeableCardStackState extends State<SwipeableCardStack>
           });
         }
       });
+
+    _flyAnimation = AlwaysStoppedAnimation(Offset.zero);
+    _returnAnimation = AlwaysStoppedAnimation(Offset.zero);
+    _returnRotation = const AlwaysStoppedAnimation(0.0);
+  }
+
+  @override
+  void didUpdateWidget(covariant SwipeableCardStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Мы ждём, пока родитель реально уберёт улетевшее фото из списка.
+    // Только когда длина списка уменьшилась до ожидаемой — сбрасываем
+    // состояние анимации. До этого момента карточка остаётся
+    // в своей финальной (улетевшей) позиции и не мигает.
+    if (_isAnimating && widget.photos.length == _pendingPhotosLength) {
+      _flyController.reset();
+      setState(() {
+        _isAnimating = false;
+        _lastDirection = null;
+        _dragOffset = Offset.zero;
+        _rotation = 0;
+      });
+    }
   }
 
   @override
@@ -83,24 +106,17 @@ class SwipeableCardStackState extends State<SwipeableCardStack>
     final photo = widget.photos.first;
     final direction = _lastDirection!;
 
-    // Сразу убираем карточку из списка — не сбрасывая offset
+    // Запоминаем, какой длины список мы ожидаем после того, как
+    // родитель уберёт это фото — по этому сигналу сбросим анимацию.
+    _pendingPhotosLength = widget.photos.length - 1;
+
+    // НЕ сбрасываем _isAnimating/_dragOffset здесь — иначе на один
+    // кадр карточка вернётся в центр (мигание), пока список ещё
+    // не обновился у родителя.
     widget.onSwiped(photo, direction);
     if (widget.photos.length <= 5) {
       widget.onLoadMore?.call();
     }
-
-    // Сбрасываем состояние только после следующего кадра
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _isAnimating = false;
-          _lastDirection = null;
-          _dragOffset = Offset.zero;
-          _rotation = 0;
-          _flyController.reset();
-        });
-      }
-    });
   }
 
   @override
@@ -111,28 +127,19 @@ class SwipeableCardStackState extends State<SwipeableCardStack>
       alignment: Alignment.center,
       children: [
         if (widget.photos.length > 2)
-          _buildBackCard(widget.photos[2], scale: 0.88, offsetY: -20),
+          _buildBackCard(widget.photos[2]),
         if (widget.photos.length > 1)
-          _buildBackCard(widget.photos[1], scale: 0.94, offsetY: -10),
+          _buildBackCard(widget.photos[1]),
         _buildFrontCard(widget.photos[0]),
       ],
     );
   }
 
-  Widget _buildBackCard(PhotoEntity photo, {
-    required double scale,
-    required double offsetY,
-  }) {
-    return Transform.translate(
-      offset: Offset(0, offsetY),
-      child: Transform.scale(
-        scale: scale,
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.85,
-          height: MediaQuery.of(context).size.height * 0.6,
-          child: PhotoCard(photo: photo, showDate: false),
-        ),
-      ),
+  Widget _buildBackCard(PhotoEntity photo) {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * 0.85,
+      height: MediaQuery.of(context).size.height * 0.6,
+      child: PhotoCard(photo: photo, showDate: false),
     );
   }
 
@@ -173,67 +180,65 @@ class SwipeableCardStackState extends State<SwipeableCardStack>
           currentRotation = _rotation;
         }
 
+        // Карточка скроется сама когда родитель удалит фото из списка
         return GestureDetector(
-          onPanStart: (_isAnimating || _isReturning) ? null : (_) => setState(() {}),
-          onPanUpdate: (_isAnimating || _isReturning)
-              ? null
-              : (details) {
-                  setState(() {
-                    _dragOffset += details.delta;
-                    _rotation = _dragOffset.dx * 0.002;
-                  });
-                },
-          onPanEnd: (_isAnimating || _isReturning)
-              ? null
-              : (_) => _handleDragEnd(photo),
-           child: Visibility(
-          // Скрываем карточку пока идёт сброс после анимации
-          visible: !(_flyController.status == AnimationStatus.completed),
-          child: Transform.translate(
-            offset: currentOffset,
-            child: Transform.rotate(
-              angle: currentRotation,
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.85,
-                height: MediaQuery.of(context).size.height * 0.6,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: glowOpacity > 0.1
-                        ? [
-                            BoxShadow(
-                              color: glowColor.withOpacity(glowOpacity * 0.9),
-                              blurRadius: 60,
-                              spreadRadius: 10,
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: Stack(
-                    children: [
-                      PhotoCard(
-                        photo: photo,
-                        onTap: () => widget.onTap(photo),
-                      ),
-                      if (glowOpacity > 0.1)
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: glowColor.withOpacity(glowOpacity),
-                                width: 4,
+            onPanStart:
+                (_isAnimating || _isReturning) ? null : (_) => setState(() {}),
+            onPanUpdate: (_isAnimating || _isReturning)
+                ? null
+                : (details) {
+                    setState(() {
+                      _dragOffset += details.delta;
+                      _rotation = _dragOffset.dx * 0.002;
+                    });
+                  },
+            onPanEnd: (_isAnimating || _isReturning)
+                ? null
+                : (_) => _handleDragEnd(photo),
+            child: Transform.translate(
+              offset: currentOffset,
+              child: Transform.rotate(
+                angle: currentRotation,
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.85,
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: glowOpacity > 0.1
+                          ? [
+                              BoxShadow(
+                                color: glowColor.withOpacity(glowOpacity * 0.9),
+                                blurRadius: 60,
+                                spreadRadius: 10,
+                              ),
+                            ]
+                          : [],
+                    ),
+                    child: Stack(
+                      children: [
+                        PhotoCard(
+                          photo: photo,
+                          onTap: () => widget.onTap(photo),
+                        ),
+                        if (glowOpacity > 0.1)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: glowColor.withOpacity(glowOpacity),
+                                  width: 4,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-           ),
         );
       },
     );
@@ -272,7 +277,6 @@ class SwipeableCardStackState extends State<SwipeableCardStack>
     _returnController.forward(from: 0);
   }
 
-  // Публичный метод для вызова свайпа из кнопок
   void triggerSwipe(SwipeDirection direction) {
     if (_isAnimating || _isReturning) return;
     if (widget.photos.isEmpty) return;

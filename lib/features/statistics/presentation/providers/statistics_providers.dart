@@ -36,6 +36,25 @@ class StatisticsNotifier extends StateNotifier<StatisticsEntity> {
     _load();
   }
 
+  Future<void> undoTrashed({required int fileSize}) async {
+    await _service.undoTrashed(fileSize: fileSize);
+    // Небольшая задержка чтобы Hive успел записать
+    await Future.delayed(const Duration(milliseconds: 50));
+    _load();
+  }
+
+  Future<void> undoKept() async {
+    await _service.undoKept();
+    await Future.delayed(const Duration(milliseconds: 50));
+    _load();
+  }
+
+  Future<void> undoSkipped() async {
+    await _service.undoSkipped();
+    await Future.delayed(const Duration(milliseconds: 50));
+    _load();
+  }
+
   Future<void> reset() async {
     await _service.reset();
     _load();

@@ -13,7 +13,6 @@ import '../../../trash/domain/entities/trash_item_entity.dart';
 import '../widgets/fullscreen_photo_viewer.dart';
 import '../../../statistics/presentation/providers/statistics_providers.dart';
 import 'package:app_settings/app_settings.dart';
-import '../widgets/swipe_indicator.dart';
 
 class PhotoSwipeScreen extends ConsumerStatefulWidget {
   const PhotoSwipeScreen({super.key});
@@ -39,8 +38,105 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Memory Swipe'),
+        leading: IconButton(
+          icon: const Icon(Icons.grid_view_rounded),
+          tooltip: 'Главное меню',
+          onPressed: () => _confirmGoToMenu(),
+        ),
         actions: [
+          if (state.canUndo)
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () async {
+                    final last = state.lastAction!;
+                    final stats =
+                        ref.read(statisticsNotifierProvider.notifier);
+                    switch (last.direction) {
+                      case SwipeDirection.left:
+                        ref
+                            .read(trashRepositoryProvider)
+                            .restoreFromTrash(last.photo.id);
+                        stats.undoTrashed(fileSize: last.photo.fileSize);
+                        break;
+                      case SwipeDirection.right:
+                        stats.undoKept();
+                        break;
+                      case SwipeDirection.up:
+                        stats.undoSkipped();
+                        break;
+                    }
+                    ref.read(photoSwipeProvider.notifier).undoLastAction();
+                  },
+                  onLongPress: () async {
+                    final history =
+                        List<LastAction>.from(state.actionHistory);
+                    for (final action in history.reversed) {
+                      final stats =
+                          ref.read(statisticsNotifierProvider.notifier);
+                      switch (action.direction) {
+                        case SwipeDirection.left:
+                          ref
+                              .read(trashRepositoryProvider)
+                              .restoreFromTrash(action.photo.id);
+                          stats.undoTrashed(fileSize: action.photo.fileSize);
+                          break;
+                        case SwipeDirection.right:
+                          stats.undoKept();
+                          break;
+                        case SwipeDirection.up:
+                          stats.undoSkipped();
+                          break;
+                      }
+                    }
+                    await ref
+                        .read(photoSwipeProvider.notifier)
+                        .undoAll();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Отменено ${history.length} действий',
+                          ),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      Icons.undo,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                if (state.actionHistory.length > 1)
+                  Positioned(
+                    right: 2,
+                    top: 2,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${state.actionHistory.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           IconButton(
             icon: const Icon(Icons.bar_chart),
             onPressed: () => context.push(AppRouter.statistics),
@@ -57,6 +153,7 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
       ),
       body: _buildBody(state),
     );
+    
   }
 
   Widget _buildBody(PhotoSwipeState state) {
@@ -162,11 +259,11 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
           ),
         );
         stats.recordTrashed(fileSize: photo.fileSize);
-        notifier.removePhoto(photo.id);
+        notifier.removePhoto(photo.id, direction: direction);
         break;
       case SwipeDirection.right:
         stats.recordKept();
-        notifier.removePhoto(photo.id);
+        notifier.removePhoto(photo.id, direction: direction);
         break;
       case SwipeDirection.up:
         stats.recordSkipped();
@@ -330,6 +427,154 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
             child: const Text('Повторить'),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _confirmGoToMenu() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Выйти в меню?'),
+        content: const Text(
+          'Текущий прогресс будет сохранён.\nВы сможете вернуться к просмотру позже.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Отмена'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Выйти'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      // Показываем экран "На сегодня всё" который и есть главное меню
+      ref.read(photoSwipeProvider.notifier).clearPhotos();
+    }
+  }
+
+  Widget _buildModeSheet(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.outline,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Что показать?',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _SheetButton(
+              icon: Icons.today,
+              label: 'Воспоминания этого дня',
+              onTap: () {
+                Navigator.pop(context);
+                ref
+                    .read(photoSwipeProvider.notifier)
+                    .changeMode(PhotoMode.today);
+              },
+            ),
+            const SizedBox(height: 12),
+            _SheetButton(
+              icon: Icons.access_time,
+              label: 'Последние фото',
+              onTap: () {
+                Navigator.pop(context);
+                ref
+                    .read(photoSwipeProvider.notifier)
+                    .changeMode(PhotoMode.recent);
+              },
+            ),
+            const SizedBox(height: 12),
+            _SheetButton(
+              icon: Icons.screenshot,
+              label: 'Скриншоты',
+              onTap: () {
+                Navigator.pop(context);
+                ref
+                    .read(photoSwipeProvider.notifier)
+                    .changeMode(PhotoMode.screenshots);
+              },
+            ),
+            const SizedBox(height: 12),
+            _SheetButton(
+              icon: Icons.calendar_today,
+              label: 'Выбрать дату',
+              onTap: () async {
+                Navigator.pop(context);
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate:
+                      DateTime.now().subtract(const Duration(days: 365)),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now(),
+                );
+                if (date != null && mounted) {
+                  ref
+                      .read(photoSwipeProvider.notifier)
+                      .changeMode(PhotoMode.byDate, date: date);
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SheetButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SheetButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Theme.of(context).colorScheme.onSurface,
+          side: BorderSide(color: Theme.of(context).colorScheme.outline),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       ),
     );
   }
