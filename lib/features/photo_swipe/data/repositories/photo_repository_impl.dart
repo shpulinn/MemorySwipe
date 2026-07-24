@@ -77,12 +77,18 @@ class PhotoRepositoryImpl implements PhotoRepository {
 
     if (albums.isEmpty) return [];
 
+    // Загружаем с запасом чтобы после фильтрации осталось достаточно
     final assets = await albums.first.getAssetListPaged(
       page: page,
-      size: pageSize,
+      size: pageSize * 3,
     );
 
-    return _convertAssets(assets);
+    final all = await _convertAssets(assets);
+    final filtered = all.where((p) => !(_viewedBox.get(p.id) ?? false)).toList();
+    
+    if (filtered.isEmpty) return [];
+    final end = pageSize.clamp(0, filtered.length);
+    return filtered.sublist(0, end);
   }
 
   @override
@@ -94,7 +100,6 @@ class PhotoRepositoryImpl implements PhotoRepository {
       type: RequestType.image,
     );
 
-    // Ищем альбом со скриншотами
     final screenshotAlbum = albums.where((a) {
       final name = a.name.toLowerCase();
       return name.contains('screenshot') || name.contains('скриншот');
@@ -104,10 +109,15 @@ class PhotoRepositoryImpl implements PhotoRepository {
 
     final assets = await screenshotAlbum.getAssetListPaged(
       page: page,
-      size: pageSize,
+      size: pageSize * 3,
     );
 
-    return _convertAssets(assets);
+    final all = await _convertAssets(assets);
+    final filtered = all.where((p) => !(_viewedBox.get(p.id) ?? false)).toList();
+    
+    if (filtered.isEmpty) return [];
+    final end = pageSize.clamp(0, filtered.length);
+    return filtered.sublist(0, end);
   }
 
   @override
@@ -119,12 +129,17 @@ class PhotoRepositoryImpl implements PhotoRepository {
     final dayStart = DateTime(date.year, date.month, date.day, 0, 0, 0);
     final dayEnd = DateTime(date.year, date.month, date.day, 23, 59, 59);
 
-    return _fetchPhotosInRange(
+    final all = await _fetchPhotosInRange(
       from: dayStart,
       to: dayEnd,
       page: page,
-      pageSize: pageSize,
+      pageSize: pageSize * 3,
     );
+
+    final filtered = all.where((p) => !(_viewedBox.get(p.id) ?? false)).toList();
+    if (filtered.isEmpty) return [];
+    final end = pageSize.clamp(0, filtered.length);
+    return filtered.sublist(0, end);
   }
 
   @override

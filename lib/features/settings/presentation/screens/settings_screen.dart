@@ -9,23 +9,12 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTheme = ref.watch(settingsProvider);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Настройки'),
       ),
       body: ListView(
         children: [
-          // Раздел — Внешний вид
-          _buildSectionHeader(context, 'Внешний вид'),
-          _buildThemeTile(context, ref, currentTheme, AppTheme.dark, '🌙 Тёмный'),
-          _buildThemeTile(context, ref, currentTheme, AppTheme.light, '☀️ Светлый'),
-          _buildThemeTile(context, ref, currentTheme, AppTheme.system, '📱 Системный'),
-
-          const Divider(),
-
-          // Раздел — Данные
           _buildSectionHeader(context, 'Данные'),
           ListTile(
             leading: const Icon(Icons.refresh),
@@ -39,15 +28,12 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: const Text('Обнулит все счётчики'),
             onTap: () => _confirmResetStats(context, ref),
           ),
-
           const Divider(),
-
-          // Раздел — О приложении
           _buildSectionHeader(context, 'О приложении'),
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('Memory Swipe'),
-            subtitle: const Text('Версия 1.0.0'),
+            subtitle: const Text('Версия 1.0.1'),
           ),
         ],
       ),
@@ -66,25 +52,6 @@ class SettingsScreen extends ConsumerWidget {
           letterSpacing: 0.5,
         ),
       ),
-    );
-  }
-
-  Widget _buildThemeTile(
-    BuildContext context,
-    WidgetRef ref,
-    AppTheme current,
-    AppTheme value,
-    String label,
-  ) {
-    return RadioListTile<AppTheme>(
-      title: Text(label),
-      value: value,
-      groupValue: current,
-      onChanged: (theme) {
-        if (theme != null) {
-          ref.read(settingsProvider.notifier).setTheme(theme);
-        }
-      },
     );
   }
 

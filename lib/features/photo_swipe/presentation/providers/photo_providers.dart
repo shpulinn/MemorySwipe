@@ -292,7 +292,12 @@ class PhotoSwipeNotifier extends StateNotifier<PhotoSwipeState> {
   }
 
   void clearPhotos() {
-    state = state.copyWith(photos: [], hasMore: false);
+    // Просто показываем EmptyState — не сбрасываем просмотренные
+    state = state.copyWith(
+      photos: [],
+      hasMore: true, // сохраняем возможность загрузить снова
+      actionHistory: [],
+    );
   }
 
   Future<List<PhotoEntity>> _fetchByMode(int page) async {

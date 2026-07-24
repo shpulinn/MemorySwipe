@@ -13,6 +13,7 @@ import '../../../trash/domain/entities/trash_item_entity.dart';
 import '../widgets/fullscreen_photo_viewer.dart';
 import '../../../statistics/presentation/providers/statistics_providers.dart';
 import 'package:app_settings/app_settings.dart';
+import '../../../../core/constants/neu_constants.dart';
 
 class PhotoSwipeScreen extends ConsumerStatefulWidget {
   const PhotoSwipeScreen({super.key});
@@ -37,123 +38,136 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
     final state = ref.watch(photoSwipeProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.grid_view_rounded),
-          tooltip: 'Главное меню',
-          onPressed: () => _confirmGoToMenu(),
-        ),
-        actions: [
-          if (state.canUndo)
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                GestureDetector(
-                  onTap: () async {
-                    final last = state.lastAction!;
-                    final stats =
-                        ref.read(statisticsNotifierProvider.notifier);
-                    switch (last.direction) {
-                      case SwipeDirection.left:
-                        ref
-                            .read(trashRepositoryProvider)
-                            .restoreFromTrash(last.photo.id);
-                        stats.undoTrashed(fileSize: last.photo.fileSize);
-                        break;
-                      case SwipeDirection.right:
-                        stats.undoKept();
-                        break;
-                      case SwipeDirection.up:
-                        stats.undoSkipped();
-                        break;
-                    }
-                    ref.read(photoSwipeProvider.notifier).undoLastAction();
-                  },
-                  onLongPress: () async {
-                    final history =
-                        List<LastAction>.from(state.actionHistory);
-                    for (final action in history.reversed) {
-                      final stats =
-                          ref.read(statisticsNotifierProvider.notifier);
-                      switch (action.direction) {
-                        case SwipeDirection.left:
-                          ref
-                              .read(trashRepositoryProvider)
-                              .restoreFromTrash(action.photo.id);
-                          stats.undoTrashed(fileSize: action.photo.fileSize);
-                          break;
-                        case SwipeDirection.right:
-                          stats.undoKept();
-                          break;
-                        case SwipeDirection.up:
-                          stats.undoSkipped();
-                          break;
-                      }
-                    }
-                    await ref
-                        .read(photoSwipeProvider.notifier)
-                        .undoAll();
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Отменено ${history.length} действий',
-                          ),
-                          duration: const Duration(seconds: 2),
+      backgroundColor: Neu.background,
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          // Контент — занимает весь экран включая зону AppBar
+          Positioned.fill(
+            child: _buildBody(state),
+          ),
+          // AppBar — поверх контента по умолчанию
+          // но карточка при перетаскивании будет поверх него
+          // потому что Stack рисует последние элементы поверх
+          // а карточка рендерится внутри body через Transform
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Container(
+                  height: 64,
+                  decoration: Neu.convex(borderRadius: 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      _NeuCircleButton(
+                        icon: Icons.grid_view_rounded,
+                        onTap: () => _confirmGoToMenu(),
+                      ),
+                      const Spacer(),
+                      if (state.canUndo)
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            _NeuCircleButton(
+                              icon: Icons.undo,
+                              onTap: () async {
+                                final last = state.lastAction!;
+                                final stats = ref.read(statisticsNotifierProvider.notifier);
+                                switch (last.direction) {
+                                  case SwipeDirection.left:
+                                    ref.read(trashRepositoryProvider).restoreFromTrash(last.photo.id);
+                                    stats.undoTrashed(fileSize: last.photo.fileSize);
+                                    break;
+                                  case SwipeDirection.right:
+                                    stats.undoKept();
+                                    break;
+                                  case SwipeDirection.up:
+                                    stats.undoSkipped();
+                                    break;
+                                }
+                                ref.read(photoSwipeProvider.notifier).undoLastAction();
+                              },
+                              onLongPress: () async {
+                                final history = List<LastAction>.from(state.actionHistory);
+                                for (final action in history.reversed) {
+                                  final stats = ref.read(statisticsNotifierProvider.notifier);
+                                  switch (action.direction) {
+                                    case SwipeDirection.left:
+                                      ref.read(trashRepositoryProvider).restoreFromTrash(action.photo.id);
+                                      stats.undoTrashed(fileSize: action.photo.fileSize);
+                                      break;
+                                    case SwipeDirection.right:
+                                      stats.undoKept();
+                                      break;
+                                    case SwipeDirection.up:
+                                      stats.undoSkipped();
+                                      break;
+                                  }
+                                }
+                                await ref.read(photoSwipeProvider.notifier).undoAll();
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Отменено ${history.length} действий'),
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                            if (state.actionHistory.length > 1)
+                              Positioned(
+                                right: 2,
+                                top: 2,
+                                child: Container(
+                                  width: 16,
+                                  height: 16,
+                                  decoration: BoxDecoration(
+                                    color: Neu.accent,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${state.actionHistory.length}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                      );
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      Icons.undo,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                      const SizedBox(width: 8),
+                      _NeuCircleButton(
+                        icon: Icons.bar_chart,
+                        onTap: () => context.push(AppRouter.statistics),
+                      ),
+                      const SizedBox(width: 8),
+                      _NeuCircleButton(
+                        icon: Icons.delete_outline,
+                        onTap: () => context.push(AppRouter.trash),
+                      ),
+                      const SizedBox(width: 8),
+                      _NeuCircleButton(
+                        icon: Icons.settings_outlined,
+                        onTap: () => context.push(AppRouter.settings),
+                      ),
+                    ],
                   ),
                 ),
-                if (state.actionHistory.length > 1)
-                  Positioned(
-                    right: 2,
-                    top: 2,
-                    child: Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${state.actionHistory.length}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+              ),
             ),
-          IconButton(
-            icon: const Icon(Icons.bar_chart),
-            onPressed: () => context.push(AppRouter.statistics),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () => context.push(AppRouter.trash),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push(AppRouter.settings),
           ),
         ],
       ),
-      body: _buildBody(state),
-    );
-    
+    );    
   }
 
   Widget _buildBody(PhotoSwipeState state) {
@@ -176,7 +190,8 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
 
     // Фото закончились
     if (state.photos.isEmpty) {
-      return EmptyState(
+      return _EmptyStateWithCelebration(
+        mode: state.mode,
         onModeSelected: (mode, {date}) {
           ref.read(photoSwipeProvider.notifier).changeMode(mode, date: date);
         },
@@ -186,6 +201,8 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
     // Основной контент
     return Column(
       children: [
+        // Отступ под AppBar
+        const SizedBox(height: 80),
         // Счётчик фото
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -574,6 +591,283 @@ class _SheetButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyStateWithCelebration extends ConsumerWidget {
+  final PhotoMode mode;
+  final Function(PhotoMode mode, {DateTime? date}) onModeSelected;
+
+  const _EmptyStateWithCelebration({
+    required this.mode,
+    required this.onModeSelected,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return EmptyState(
+      currentMode: mode,
+      onModeSelected: onModeSelected,
+    );
+  }
+}
+
+class _EmptyStateWithCelebrationState
+    extends ConsumerState<_EmptyStateWithCelebration> {
+  bool _celebrationShown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Показываем поздравление только если пользователь
+    // реально просматривал фото (есть история действий или статистика)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_celebrationShown) {
+        final stats = ref.read(statisticsNotifierProvider);
+        // Показываем только если хоть что-то было просмотрено
+        if (stats.totalViewed > 0) {
+          _celebrationShown = true;
+          _showCelebration();
+        }
+      }
+    });
+  }
+
+  Future<void> _showCelebration() async {
+    final trashCount =
+        await ref.read(trashRepositoryProvider).getTrashCount();
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '🎉',
+                style: TextStyle(fontSize: 64),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _titleForMode(widget.mode),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _subtitleForMode(widget.mode),
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withOpacity(0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              if (trashCount > 0) ...[
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border:
+                        Border.all(color: Colors.red.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.delete_outline,
+                          color: Colors.red, size: 24),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'В корзине $trashCount фото — освободи место!',
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.push(AppRouter.trash);
+                    },
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Открыть корзину'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Позже',
+                      style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Отлично!'),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _titleForMode(PhotoMode mode) {
+    switch (mode) {
+      case PhotoMode.today:
+        return 'Воспоминания просмотрены!';
+      case PhotoMode.recent:
+        return 'Последние фото просмотрены!';
+      case PhotoMode.screenshots:
+        return 'Скриншоты просмотрены!';
+      case PhotoMode.byDate:
+        return 'Фото за эту дату просмотрены!';
+    }
+  }
+
+  String _subtitleForMode(PhotoMode mode) {
+    switch (mode) {
+      case PhotoMode.today:
+        return 'Ты просмотрел все воспоминания этого дня. Отличная работа!';
+      case PhotoMode.recent:
+        return 'Ты просмотрел все последние фото. Так держать!';
+      case PhotoMode.screenshots:
+        return 'Все скриншоты просмотрены. Телефон стал чище!';
+      case PhotoMode.byDate:
+        return 'Все фото за выбранную дату просмотрены!';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return EmptyState(
+      currentMode: widget.mode,
+      onModeSelected: widget.onModeSelected,
+    );
+  }
+}
+
+class _NeuCircleButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+
+  const _NeuCircleButton({
+    required this.icon,
+    required this.onTap,
+    this.onLongPress,
+  });
+
+  @override
+  State<_NeuCircleButton> createState() => _NeuCircleButtonState();
+}
+
+class _NeuCircleButtonState extends State<_NeuCircleButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      onLongPress: widget.onLongPress,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Neu.background,
+          boxShadow: _pressed
+              ? [
+                  const BoxShadow(
+                    color: Neu.darkShadow,
+                    offset: Offset(-1, -1),
+                    blurRadius: 3,
+                  ),
+                  const BoxShadow(
+                    color: Neu.lightShadow,
+                    offset: Offset(1, 1),
+                    blurRadius: 3,
+                  ),
+                ]
+              : [
+                  const BoxShadow(
+                    color: Neu.lightShadow,
+                    offset: Offset(-3, -3),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                  const BoxShadow(
+                    color: Neu.darkShadow,
+                    offset: Offset(3, 3),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
+        ),
+        child: Icon(
+          widget.icon,
+          color: Neu.textPrimary,
+          size: 20,
         ),
       ),
     );
