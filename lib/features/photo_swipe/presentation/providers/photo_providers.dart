@@ -208,6 +208,7 @@ class PhotoSwipeNotifier extends StateNotifier<PhotoSwipeState> {
       mode: mode,
       selectedDate: date,
       currentPage: 0,
+      actionHistory: [], // сбрасываем историю при смене режима
     );
     await loadPhotos();
   }

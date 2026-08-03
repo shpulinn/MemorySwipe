@@ -35,7 +35,7 @@ class EmptyState extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: Neu.textPrimary,
+                  color: Neu.text(context),
                 ),
               ),
               const SizedBox(height: 8),
@@ -43,7 +43,7 @@ class EmptyState extends ConsumerWidget {
                 'Все воспоминания этого дня просмотрены',
                 style: TextStyle(
                   fontSize: 15,
-                  color: Neu.textSecondary,
+                  color: Neu.textSub(context),
                 ),
               ),
             ],
@@ -56,19 +56,19 @@ class EmptyState extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Neu.background,
+                      color: Neu.bg(context),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                           color: Colors.red.withOpacity(0.4), width: 1.5),
-                      boxShadow: const [
+                      boxShadow: [
                         BoxShadow(
-                          color: Neu.lightShadow,
-                          offset: Offset(-3, -3),
+                          color: Neu.shadow1(context),
+                          offset: const Offset(-3, -3),
                           blurRadius: 8,
                         ),
                         BoxShadow(
-                          color: Neu.darkShadow,
-                          offset: Offset(3, 3),
+                          color: Neu.shadow2(context),
+                          offset: const Offset(3, 3),
                           blurRadius: 8,
                         ),
                       ],
@@ -122,7 +122,7 @@ class EmptyState extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Neu.textPrimary,
+                  color: Neu.text(context),
                 ),
               ),
               const SizedBox(height: 16),
@@ -209,34 +209,34 @@ class _NeuModeButtonState extends State<_NeuModeButton> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: Neu.background,
+          color: Neu.bg(context),
           borderRadius: BorderRadius.circular(16),
           border: widget.isActive
               ? Border.all(color: Neu.accent.withOpacity(0.5), width: 1.5)
               : null,
           boxShadow: _pressed
               ? [
-                  const BoxShadow(
-                    color: Neu.darkShadow,
-                    offset: Offset(-2, -2),
+                  BoxShadow(
+                    color: Neu.shadow2(context),
+                    offset: const Offset(-2, -2),
                     blurRadius: 5,
                   ),
-                  const BoxShadow(
-                    color: Neu.lightShadow,
-                    offset: Offset(2, 2),
+                  BoxShadow(
+                    color: Neu.shadow1(context),
+                    offset: const Offset(2, 2),
                     blurRadius: 5,
                   ),
                 ]
               : [
-                  const BoxShadow(
-                    color: Neu.lightShadow,
-                    offset: Offset(-4, -4),
+                  BoxShadow(
+                    color: Neu.shadow1(context),
+                    offset: const Offset(-4, -4),
                     blurRadius: 10,
                     spreadRadius: 1,
                   ),
-                  const BoxShadow(
-                    color: Neu.darkShadow,
-                    offset: Offset(4, 4),
+                  BoxShadow(
+                    color: Neu.shadow2(context),
+                    offset: const Offset(4, 4),
                     blurRadius: 10,
                     spreadRadius: 1,
                   ),
@@ -249,26 +249,28 @@ class _NeuModeButtonState extends State<_NeuModeButton> {
               decoration: BoxDecoration(
                 color: widget.isActive
                     ? Neu.accent.withOpacity(0.15)
-                    : Neu.background,
+                    : Neu.bg(context),
                 shape: BoxShape.circle,
                 boxShadow: widget.isActive
                     ? []
                     : [
-                        const BoxShadow(
-                          color: Neu.lightShadow,
-                          offset: Offset(-2, -2),
-                          blurRadius: 4,
+                        BoxShadow(
+                          color: Neu.shadow1(context),
+                          offset: const Offset(-2, -2),
+                          blurRadius: 6,
+                          spreadRadius: 0,
                         ),
-                        const BoxShadow(
-                          color: Neu.darkShadow,
-                          offset: Offset(2, 2),
-                          blurRadius: 4,
+                        BoxShadow(
+                          color: Neu.shadow2(context),
+                          offset: const Offset(2, 2),
+                          blurRadius: 6,
+                          spreadRadius: 0,
                         ),
                       ],
               ),
               child: Icon(
                 widget.icon,
-                color: widget.isActive ? Neu.accent : Neu.textSecondary,
+                color: widget.isActive ? Neu.accent : Neu.textSub(context),
                 size: 20,
               ),
             ),
@@ -277,16 +279,14 @@ class _NeuModeButtonState extends State<_NeuModeButton> {
               widget.label,
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: widget.isActive
-                    ? FontWeight.w600
-                    : FontWeight.w400,
-                color: widget.isActive ? Neu.accent : Neu.textPrimary,
+                fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400,
+                color: widget.isActive ? Neu.accent : Neu.text(context),
               ),
             ),
             const Spacer(),
             Icon(
               Icons.chevron_right,
-              color: Neu.textSecondary,
+              color: Neu.textSub(context),
               size: 20,
             ),
           ],

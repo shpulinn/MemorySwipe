@@ -18,16 +18,16 @@ class StatisticsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Заголовок
-            Text(
-              'Твои достижения',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 32),
+            // // Заголовок
+            // Text(
+            //   'Твои достижения',
+            //   style: TextStyle(
+            //     color: Theme.of(context).colorScheme.onSurface,
+            //     fontSize: 24,
+            //     fontWeight: FontWeight.bold,
+            //   ),
+            // ),
+            // const SizedBox(height: 32),
 
             // Карточка освобождённого места
             _buildHighlightCard(

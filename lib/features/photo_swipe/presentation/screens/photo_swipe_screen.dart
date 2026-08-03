@@ -14,6 +14,7 @@ import '../widgets/fullscreen_photo_viewer.dart';
 import '../../../statistics/presentation/providers/statistics_providers.dart';
 import 'package:app_settings/app_settings.dart';
 import '../../../../core/constants/neu_constants.dart';
+import '../../../../core/widgets/theme_toggle_slider.dart';
 
 class PhotoSwipeScreen extends ConsumerStatefulWidget {
   const PhotoSwipeScreen({super.key});
@@ -37,8 +38,10 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(photoSwipeProvider);
 
+    final isMenuScreen = state.photos.isEmpty && !state.isLoading;
+
     return Scaffold(
-      backgroundColor: Neu.background,
+      backgroundColor: Neu.bg(context),
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
@@ -59,16 +62,19 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Container(
                   height: 64,
-                  decoration: Neu.convex(borderRadius: 32),
+                  decoration: Neu.convexDynamic(context, borderRadius: 32),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Row(
                     children: [
-                      _NeuCircleButton(
-                        icon: Icons.grid_view_rounded,
-                        onTap: () => _confirmGoToMenu(),
-                      ),
+                      if (isMenuScreen)
+                        const ThemeToggleSlider()
+                      else
+                        _NeuCircleButton(
+                          icon: Icons.grid_view_rounded,
+                          onTap: () => _confirmGoToMenu(),
+                        ),
                       const Spacer(),
-                      if (state.canUndo)
+                      if (state.canUndo && state.photos.isNotEmpty)
                         Stack(
                           alignment: Alignment.center,
                           children: [
@@ -615,192 +621,6 @@ class _EmptyStateWithCelebration extends ConsumerWidget {
   }
 }
 
-class _EmptyStateWithCelebrationState
-    extends ConsumerState<_EmptyStateWithCelebration> {
-  bool _celebrationShown = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Показываем поздравление только если пользователь
-    // реально просматривал фото (есть история действий или статистика)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_celebrationShown) {
-        final stats = ref.read(statisticsNotifierProvider);
-        // Показываем только если хоть что-то было просмотрено
-        if (stats.totalViewed > 0) {
-          _celebrationShown = true;
-          _showCelebration();
-        }
-      }
-    });
-  }
-
-  Future<void> _showCelebration() async {
-    final trashCount =
-        await ref.read(trashRepositoryProvider).getTrashCount();
-
-    if (!mounted) return;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                '🎉',
-                style: TextStyle(fontSize: 64),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _titleForMode(widget.mode),
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                _subtitleForMode(widget.mode),
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withOpacity(0.6),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              if (trashCount > 0) ...[
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: Colors.red.withOpacity(0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.delete_outline,
-                          color: Colors.red, size: 24),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'В корзине $trashCount фото — освободи место!',
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.push(AppRouter.trash);
-                    },
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Открыть корзину'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Позже',
-                      style: TextStyle(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withOpacity(0.5),
-                      ),
-                    ),
-                  ),
-                ),
-              ] else ...[
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Отлично!'),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _titleForMode(PhotoMode mode) {
-    switch (mode) {
-      case PhotoMode.today:
-        return 'Воспоминания просмотрены!';
-      case PhotoMode.recent:
-        return 'Последние фото просмотрены!';
-      case PhotoMode.screenshots:
-        return 'Скриншоты просмотрены!';
-      case PhotoMode.byDate:
-        return 'Фото за эту дату просмотрены!';
-    }
-  }
-
-  String _subtitleForMode(PhotoMode mode) {
-    switch (mode) {
-      case PhotoMode.today:
-        return 'Ты просмотрел все воспоминания этого дня. Отличная работа!';
-      case PhotoMode.recent:
-        return 'Ты просмотрел все последние фото. Так держать!';
-      case PhotoMode.screenshots:
-        return 'Все скриншоты просмотрены. Телефон стал чище!';
-      case PhotoMode.byDate:
-        return 'Все фото за выбранную дату просмотрены!';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return EmptyState(
-      currentMode: widget.mode,
-      onModeSelected: widget.onModeSelected,
-    );
-  }
-}
-
 class _NeuCircleButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -835,30 +655,30 @@ class _NeuCircleButtonState extends State<_NeuCircleButton> {
         height: 40,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Neu.background,
+          color: Neu.bg(context),
           boxShadow: _pressed
               ? [
-                  const BoxShadow(
-                    color: Neu.darkShadow,
-                    offset: Offset(-1, -1),
+                  BoxShadow(
+                    color: Neu.shadow2(context),
+                    offset: const Offset(-1, -1),
                     blurRadius: 3,
                   ),
-                  const BoxShadow(
-                    color: Neu.lightShadow,
-                    offset: Offset(1, 1),
+                  BoxShadow(
+                    color: Neu.shadow1(context),
+                    offset: const Offset(1, 1),
                     blurRadius: 3,
                   ),
                 ]
               : [
-                  const BoxShadow(
-                    color: Neu.lightShadow,
-                    offset: Offset(-3, -3),
+                  BoxShadow(
+                    color: Neu.shadow1(context),
+                    offset: const Offset(-3, -3),
                     blurRadius: 8,
                     spreadRadius: 1,
                   ),
-                  const BoxShadow(
-                    color: Neu.darkShadow,
-                    offset: Offset(3, 3),
+                  BoxShadow(
+                    color: Neu.shadow2(context),
+                    offset: const Offset(3, 3),
                     blurRadius: 8,
                     spreadRadius: 1,
                   ),
@@ -866,7 +686,7 @@ class _NeuCircleButtonState extends State<_NeuCircleButton> {
         ),
         child: Icon(
           widget.icon,
-          color: Neu.textPrimary,
+          color: Neu.text(context),
           size: 20,
         ),
       ),

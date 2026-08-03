@@ -108,12 +108,18 @@ class TrashNotifier extends StateNotifier<TrashState> {
   Future<void> restore(String photoId) async {
     try {
       await _restoreFromTrash(photoId);
+      final newSelected = Set<String>.from(state.selectedIds)
+        ..remove(photoId);
       state = state.copyWith(
         items: state.items.where((i) => i.photoId != photoId).toList(),
-        selectedIds: state.selectedIds..remove(photoId),
+        selectedIds: newSelected,
+        error: null,
       );
     } catch (e) {
       state = state.copyWith(error: 'Не удалось восстановить фото');
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) state = state.copyWith(error: null);
+      });
     }
   }
 

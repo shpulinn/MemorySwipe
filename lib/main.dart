@@ -25,14 +25,17 @@ void main() async {
   );
 }
 
-class MemorySwipeApp extends StatelessWidget {
+class MemorySwipeApp extends ConsumerWidget {
   const MemorySwipeApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ref.watch(isDarkProvider);
+
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
+      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF7B6CF6),
@@ -42,6 +45,19 @@ class MemorySwipeApp extends StatelessWidget {
         useMaterial3: true,
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFFE8EAF0),
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+        ),
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF7B6CF6),
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF1A1B2E),
+        useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1A1B2E),
           surfaceTintColor: Colors.transparent,
           elevation: 0,
         ),

@@ -74,9 +74,42 @@ class _NeuButtonState extends State<_NeuButton> {
         duration: const Duration(milliseconds: 100),
         width: widget.size,
         height: widget.size,
-        decoration: _pressed
-            ? Neu.pressed(borderRadius: 20)
-            : Neu.convex(borderRadius: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: Neu.bg(context),
+          boxShadow: _pressed
+              ? [
+                  BoxShadow(
+                    color: Neu.shadow2(context),
+                    offset: const Offset(-1, -1),
+                    blurRadius: 3,
+                  ),
+                  BoxShadow(
+                    color: Neu.shadow1(context),
+                    offset: const Offset(1, 1),
+                    blurRadius: 3,
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Neu.shadow1(context),
+                    offset: const Offset(-4, -4),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  ),
+                  BoxShadow(
+                    color: Neu.shadow2(context),
+                    offset: const Offset(4, 4),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  ),
+                  BoxShadow(
+                    color: widget.color.withOpacity(0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+        ),
         child: Icon(
           widget.icon,
           color: widget.color,
