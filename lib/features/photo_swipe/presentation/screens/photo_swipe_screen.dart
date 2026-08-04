@@ -212,13 +212,13 @@ class _PhotoSwipeScreenState extends ConsumerState<PhotoSwipeScreen> {
         // Счётчик фото
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            _buildCounterText(state),
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-              fontSize: 14,
-            ),
-          ),
+          // child: Text(
+          //   _buildCounterText(state),
+          //   style: TextStyle(
+          //     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+          //     fontSize: 14,
+          //   ),
+          // ),
         ),
         // Стек карточек
         Expanded(

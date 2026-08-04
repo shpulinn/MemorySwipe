@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../domain/entities/photo_entity.dart';
 import '../../../../core/services/share_service.dart';
+import '../../../../core/constants/neu_constants.dart';
 
 class FullscreenPhotoViewer extends StatefulWidget {
   final PhotoEntity photo;
@@ -12,7 +13,6 @@ class FullscreenPhotoViewer extends StatefulWidget {
     required this.photo,
   });
 
-  // Удобный метод для открытия
   static Future<void> show(BuildContext context, PhotoEntity photo) {
     return Navigator.of(context).push(
       PageRouteBuilder(
@@ -33,23 +33,19 @@ class FullscreenPhotoViewer extends StatefulWidget {
 }
 
 class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
-  // Контроллер для зума
   final TransformationController _transformationController =
       TransformationController();
-
-  // Показывать ли панель с информацией
   bool _showInfo = true;
+  Offset _doubleTapPosition = Offset.zero;
 
   @override
   void initState() {
     super.initState();
-    // Скрываем системные панели для полноэкранного режима
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
   @override
   void dispose() {
-    // Возвращаем системные панели
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _transformationController.dispose();
     super.dispose();
@@ -61,6 +57,7 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // Фото
           GestureDetector(
             onTap: () => setState(() => _showInfo = !_showInfo),
             onDoubleTapDown: _handleDoubleTapDown,
@@ -85,6 +82,7 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
               ),
             ),
           ),
+          // Верхняя панель
           Positioned(
             top: 0,
             left: 0,
@@ -98,6 +96,7 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
               ),
             ),
           ),
+          // Нижняя панель
           Positioned(
             left: 0,
             right: 0,
@@ -130,15 +129,15 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                color: Colors.white,
-                onPressed: () => Navigator.pop(context),
+              // Кнопка назад в нейморфном стиле на тёмном фоне
+              _DarkNeuButton(
+                icon: Icons.arrow_back,
+                onTap: () => Navigator.pop(context),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   _formatDate(widget.photo.createdAt),
@@ -151,10 +150,10 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
                   ),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.share),
-                color: Colors.white,
-                onPressed: _sharePhoto,
+              // Кнопка поделиться
+              _DarkNeuButton(
+                icon: Icons.share,
+                onTap: _sharePhoto,
               ),
             ],
           ),
@@ -212,29 +211,19 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
     _doubleTapPosition = details.localPosition;
   }
 
-  Offset _doubleTapPosition = Offset.zero;
-
   void _handleDoubleTap() {
-    // Проверяем текущий масштаб
-    final double currentScale = _transformationController.value.getMaxScaleOnAxis();
+    final double currentScale =
+        _transformationController.value.getMaxScaleOnAxis();
 
     if (currentScale > 1.1) {
-      // Уже зумлено — сбрасываем
       _transformationController.value = Matrix4.identity();
     } else {
-      // Зумим к месту тапа
-      final double scale = 2.5;
-      final Offset tapPosition = _doubleTapPosition;
-
-      // Вычисляем смещение чтобы тапнутая точка осталась по центру
-      final double x = -tapPosition.dx * (scale - 1);
-      final double y = -tapPosition.dy * (scale - 1);
-
-      final Matrix4 zoomed = Matrix4.identity()
+      const double scale = 2.5;
+      final double x = -_doubleTapPosition.dx * (scale - 1);
+      final double y = -_doubleTapPosition.dy * (scale - 1);
+      _transformationController.value = Matrix4.identity()
         ..translate(x, y)
         ..scale(scale);
-
-      _transformationController.value = zoomed;
     }
   }
 
@@ -249,5 +238,76 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
       'сентября', 'октября', 'ноября', 'декабря',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+}
+
+// Нейморфная кнопка для тёмного фона (полноэкранный просмотр)
+class _DarkNeuButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _DarkNeuButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  State<_DarkNeuButton> createState() => _DarkNeuButtonState();
+}
+
+class _DarkNeuButtonState extends State<_DarkNeuButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFF1A1B2E),
+          boxShadow: _pressed
+              ? const [
+                  BoxShadow(
+                    color: Color(0xFF0D0E1A),
+                    offset: Offset(-1, -1),
+                    blurRadius: 3,
+                  ),
+                  BoxShadow(
+                    color: Color(0xFF2A2B4A),
+                    offset: Offset(1, 1),
+                    blurRadius: 3,
+                  ),
+                ]
+              : const [
+                  BoxShadow(
+                    color: Color(0xFF2A2B4A),
+                    offset: Offset(-3, -3),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                  BoxShadow(
+                    color: Color(0xFF0D0E1A),
+                    offset: Offset(3, 3),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
+        ),
+        child: Icon(
+          widget.icon,
+          color: Colors.white,
+          size: 20,
+        ),
+      ),
+    );
   }
 }

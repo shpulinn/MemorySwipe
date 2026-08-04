@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/statistics_providers.dart';
+import '../../../../core/constants/neu_constants.dart';
 
 class StatisticsScreen extends ConsumerWidget {
   const StatisticsScreen({super.key});
@@ -10,36 +11,36 @@ class StatisticsScreen extends ConsumerWidget {
     final stats = ref.watch(statisticsNotifierProvider);
 
     return Scaffold(
+      backgroundColor: Neu.bg(context),
       appBar: AppBar(
-        title: const Text('Статистика'),
+        backgroundColor: Neu.bg(context),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'Статистика',
+          style: TextStyle(
+            color: Neu.text(context),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        iconTheme: IconThemeData(color: Neu.text(context)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // // Заголовок
-            // Text(
-            //   'Твои достижения',
-            //   style: TextStyle(
-            //     color: Theme.of(context).colorScheme.onSurface,
-            //     fontSize: 24,
-            //     fontWeight: FontWeight.bold,
-            //   ),
-            // ),
-            // const SizedBox(height: 32),
-
-            // Карточка освобождённого места
+            // Главная карточка — освобождено места
             _buildHighlightCard(
               context: context,
               icon: Icons.storage,
               label: 'Освобождено места',
               value: '${stats.freedMb.toStringAsFixed(1)} МБ',
-              color: Colors.deepPurple,
+              color: Neu.accent,
             ),
             const SizedBox(height: 16),
 
-            // Сетка с остальной статистикой
+            // Сетка
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -96,17 +97,42 @@ class StatisticsScreen extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: Neu.bg(context),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Neu.shadow1(context),
+            offset: const Offset(-4, -4),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Neu.shadow2(context),
+            offset: const Offset(4, 4),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
+              color: Neu.bg(context),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Neu.shadow2(context),
+                  offset: const Offset(-2, -2),
+                  blurRadius: 6,
+                ),
+                BoxShadow(
+                  color: Neu.shadow1(context),
+                  offset: const Offset(2, 2),
+                  blurRadius: 6,
+                ),
+              ],
             ),
             child: Icon(icon, color: color, size: 28),
           ),
@@ -125,7 +151,7 @@ class StatisticsScreen extends ConsumerWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Neu.textSub(context),
                   fontSize: 14,
                 ),
               ),
@@ -146,24 +172,55 @@ class StatisticsScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        color: Neu.bg(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        boxShadow: [
+          BoxShadow(
+            color: Neu.shadow1(context),
+            offset: const Offset(-3, -3),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Neu.shadow2(context),
+            offset: const Offset(3, 3),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(icon, color: color, size: 24),
+          // Иконка вдавленная
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Neu.bg(context),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Neu.shadow2(context),
+                  offset: const Offset(-2, -2),
+                  blurRadius: 5,
+                ),
+                BoxShadow(
+                  color: Neu.shadow1(context),
+                  offset: const Offset(2, 2),
+                  blurRadius: 5,
+                ),
+              ],
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 value,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Neu.text(context),
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -171,7 +228,7 @@ class StatisticsScreen extends ConsumerWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  color: Neu.textSub(context),
                   fontSize: 12,
                 ),
               ),

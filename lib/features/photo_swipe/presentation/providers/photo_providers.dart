@@ -301,6 +301,15 @@ class PhotoSwipeNotifier extends StateNotifier<PhotoSwipeState> {
     );
   }
 
+  // Убрать конкретное фото из истории действий (при восстановлении из корзины)
+  void removeFromHistory(String photoId) {
+    state = state.copyWith(
+      actionHistory: state.actionHistory
+          .where((a) => a.photo.id != photoId)
+          .toList(),
+    );
+  }
+
   Future<List<PhotoEntity>> _fetchByMode(int page) async {
     switch (state.mode) {
       case PhotoMode.today:
