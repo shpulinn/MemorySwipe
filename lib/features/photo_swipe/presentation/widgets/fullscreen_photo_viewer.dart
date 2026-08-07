@@ -132,7 +132,6 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           child: Row(
             children: [
-              // Кнопка назад в нейморфном стиле на тёмном фоне
               _DarkNeuButton(
                 icon: Icons.arrow_back,
                 onTap: () => Navigator.pop(context),
@@ -150,7 +149,6 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
                   ),
                 ),
               ),
-              // Кнопка поделиться
               _DarkNeuButton(
                 icon: Icons.share,
                 onTap: _sharePhoto,
@@ -231,6 +229,30 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
     await ShareService.sharePhoto(widget.photo.path);
   }
 
+  Future<void> _shareToTelegram() async {
+    final success = await ShareService.shareToTelegram(widget.photo.path);
+    if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Telegram не установлен'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _shareToVK() async {
+    final success = await ShareService.shareToVK(widget.photo.path);
+    if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ВКонтакте не установлен'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   String _formatDate(DateTime date) {
     final months = [
       'января', 'февраля', 'марта', 'апреля',
@@ -245,10 +267,12 @@ class _FullscreenPhotoViewerState extends State<FullscreenPhotoViewer> {
 class _DarkNeuButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback onTap;
+  final String? tooltip;
 
   const _DarkNeuButton({
     required this.icon,
     required this.onTap,
+    this.tooltip,
   });
 
   @override
@@ -267,7 +291,9 @@ class _DarkNeuButtonState extends State<_DarkNeuButton> {
         widget.onTap();
       },
       onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedContainer(
+      child: Tooltip(
+        message: widget.tooltip ?? '',
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         width: 40,
         height: 40,
@@ -307,6 +333,7 @@ class _DarkNeuButtonState extends State<_DarkNeuButton> {
           color: Colors.white,
           size: 20,
         ),
+      ),
       ),
     );
   }
