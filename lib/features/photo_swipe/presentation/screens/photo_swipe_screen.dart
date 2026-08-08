@@ -15,6 +15,7 @@ import '../../../statistics/presentation/providers/statistics_providers.dart';
 import 'package:app_settings/app_settings.dart';
 import '../../../../core/constants/neu_constants.dart';
 import '../../../../core/widgets/theme_toggle_slider.dart';
+import 'package:flutter/services.dart';
 
 class PhotoSwipeScreen extends ConsumerStatefulWidget {
   const PhotoSwipeScreen({super.key});
@@ -645,6 +646,7 @@ class _NeuCircleButtonState extends State<_NeuCircleButton> {
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) {
         setState(() => _pressed = false);
+        HapticFeedback.selectionClick();
         widget.onTap();
       },
       onTapCancel: () => setState(() => _pressed = false),

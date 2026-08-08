@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/neu_constants.dart';
+import 'package:flutter/services.dart';
 
 class ActionButtons extends StatelessWidget {
   final VoidCallback onTrash;
@@ -67,6 +68,7 @@ class _NeuButtonState extends State<_NeuButton> {
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) {
         setState(() => _pressed = false);
+        HapticFeedback.selectionClick();
         widget.onTap();
       },
       onTapCancel: () => setState(() => _pressed = false),

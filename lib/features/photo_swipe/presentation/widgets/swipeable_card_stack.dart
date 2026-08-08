@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/photo_entity.dart';
 import 'photo_card.dart';
 import 'swipe_indicator.dart';
+import 'package:flutter/services.dart';
 
 class SwipeableCardStack extends StatefulWidget {
   final List<PhotoEntity> photos;
@@ -185,13 +186,16 @@ class SwipeableCardStackState extends State<SwipeableCardStack>
             onPanStart:
                 (_isAnimating || _isReturning) ? null : (_) => setState(() {}),
             onPanUpdate: (_isAnimating || _isReturning)
-                ? null
-                : (details) {
-                    setState(() {
-                      _dragOffset += details.delta;
-                      _rotation = _dragOffset.dx * 0.002;
-                    });
-                  },
+              ? null
+              : (details) {
+                  final prevOffset = _dragOffset;
+                  setState(() {
+                    _dragOffset += details.delta;
+                    _rotation = _dragOffset.dx * 0.002;
+                  });
+                  // Вибрация когда пересекаем порог
+                  _checkThresholdCrossed(prevOffset, _dragOffset);
+                },
             onPanEnd: (_isAnimating || _isReturning)
                 ? null
                 : (_) => _handleDragEnd(photo),
@@ -244,14 +248,33 @@ class SwipeableCardStackState extends State<SwipeableCardStack>
     );
   }
 
+  void _checkThresholdCrossed(Offset prev, Offset current) {
+    // Порог влево
+    if (prev.dx > -_swipeThreshold && current.dx <= -_swipeThreshold) {
+      HapticFeedback.mediumImpact();
+    }
+    // Порог вправо
+    if (prev.dx < _swipeThreshold && current.dx >= _swipeThreshold) {
+      HapticFeedback.mediumImpact();
+    }
+    // Порог вверх
+    if (prev.dy > _upSwipeThreshold && current.dy <= _upSwipeThreshold) {
+      HapticFeedback.mediumImpact();
+    }
+  }
+
   void _handleDragEnd(PhotoEntity photo) {
     if (_dragOffset.dx > _swipeThreshold) {
+      HapticFeedback.lightImpact();
       _startFlyAnimation(SwipeDirection.right);
     } else if (_dragOffset.dx < -_swipeThreshold) {
+      HapticFeedback.heavyImpact();
       _startFlyAnimation(SwipeDirection.left);
     } else if (_dragOffset.dy < _upSwipeThreshold) {
+      HapticFeedback.mediumImpact();
       _startFlyAnimation(SwipeDirection.up);
     } else {
+      HapticFeedback.selectionClick();
       _startReturnAnimation();
     }
   }
